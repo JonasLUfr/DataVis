@@ -1,0 +1,17 @@
+# Liste des jours anormaux (NaN critiques + volatilité du gap)
+# Jours anormaux (NaN): 4
+# Jours anormaux (gap): 8
+# Total (jours uniques): 12
+
+2025-03-09
+2025-04-20
+2025-04-26
+2025-04-27
+2025-05-04
+2025-06-01
+2025-08-10
+2025-09-07
+2025-10-24
+2025-10-25
+2025-11-28
+2025-11-29

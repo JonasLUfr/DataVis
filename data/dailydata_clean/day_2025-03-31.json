@@ -1,0 +1,674 @@
+[
+  {
+    "time": "01:15",
+    "load": 45042.0,
+    "production": 54726.0,
+    "forecast_d1": 45750,
+    "forecast_d": 45350.0
+  },
+  {
+    "time": "02:00",
+    "load": 43985.0,
+    "production": 54111.0,
+    "forecast_d1": 45500,
+    "forecast_d": 44200.0
+  },
+  {
+    "time": "02:45",
+    "load": 43038.0,
+    "production": 54036.0,
+    "forecast_d1": 43950,
+    "forecast_d": 43550.0
+  },
+  {
+    "time": "04:30",
+    "load": 41762.0,
+    "production": 53972.0,
+    "forecast_d1": 42500,
+    "forecast_d": 42000.0
+  },
+  {
+    "time": "04:45",
+    "load": 41841.0,
+    "production": 54073.0,
+    "forecast_d1": 43200,
+    "forecast_d": 42400.0
+  },
+  {
+    "time": "05:30",
+    "load": 44186.0,
+    "production": 54896.0,
+    "forecast_d1": 45500,
+    "forecast_d": 44600.0
+  },
+  {
+    "time": "06:00",
+    "load": 46163.0,
+    "production": 56175.0,
+    "forecast_d1": 47500,
+    "forecast_d": 46500.0
+  },
+  {
+    "time": "10:15",
+    "load": 55728.0,
+    "production": 65850.0,
+    "forecast_d1": 56700,
+    "forecast_d": 55900.0
+  },
+  {
+    "time": "11:00",
+    "load": 54928.0,
+    "production": 64770.0,
+    "forecast_d1": 55900,
+    "forecast_d": 54900.0
+  },
+  {
+    "time": "11:45",
+    "load": 54325.0,
+    "production": 65702.0,
+    "forecast_d1": 55750,
+    "forecast_d": 54600.0
+  },
+  {
+    "time": "13:30",
+    "load": 52871.0,
+    "production": 65213.0,
+    "forecast_d1": 53000,
+    "forecast_d": 52900.0
+  },
+  {
+    "time": "14:15",
+    "load": 51761.0,
+    "production": 60551.0,
+    "forecast_d1": 51850,
+    "forecast_d": 51700.0
+  },
+  {
+    "time": "18:45",
+    "load": 48030.0,
+    "production": 59243.0,
+    "forecast_d1": 50100,
+    "forecast_d": 48550.0
+  },
+  {
+    "time": "19:45",
+    "load": 49583.0,
+    "production": 59974.0,
+    "forecast_d1": 52300,
+    "forecast_d": 50350.0
+  },
+  {
+    "time": "20:00",
+    "load": 49793.0,
+    "production": 61422.0,
+    "forecast_d1": 52700,
+    "forecast_d": 50000.0
+  },
+  {
+    "time": "20:30",
+    "load": 50309.0,
+    "production": 63762.0,
+    "forecast_d1": 51800,
+    "forecast_d": 50700.0
+  },
+  {
+    "time": "22:00",
+    "load": 48415.0,
+    "production": 64637.0,
+    "forecast_d1": 49400,
+    "forecast_d": 48037.0
+  },
+  {
+    "time": "00:15",
+    "load": 48025.0,
+    "production": 56855.0,
+    "forecast_d1": 47850,
+    "forecast_d": 47750.0
+  },
+  {
+    "time": "03:30",
+    "load": 42261.0,
+    "production": 53633.0,
+    "forecast_d1": 42900,
+    "forecast_d": 42500.0
+  },
+  {
+    "time": "06:45",
+    "load": 50737.0,
+    "production": 61110.0,
+    "forecast_d1": 52250,
+    "forecast_d": 51550.0
+  },
+  {
+    "time": "08:15",
+    "load": 56599.0,
+    "production": 64377.0,
+    "forecast_d1": 57250,
+    "forecast_d": 56550.0
+  },
+  {
+    "time": "13:00",
+    "load": 53286.0,
+    "production": 65916.0,
+    "forecast_d1": 56400,
+    "forecast_d": 54800.0
+  },
+  {
+    "time": "13:15",
+    "load": 53290.0,
+    "production": 65998.0,
+    "forecast_d1": 54700,
+    "forecast_d": 53850.0
+  },
+  {
+    "time": "14:00",
+    "load": 52255.0,
+    "production": 63961.0,
+    "forecast_d1": 52300,
+    "forecast_d": 52200.0
+  },
+  {
+    "time": "15:00",
+    "load": 50316.0,
+    "production": 60117.0,
+    "forecast_d1": 50000,
+    "forecast_d": 50300.0
+  },
+  {
+    "time": "15:45",
+    "load": 47842.0,
+    "production": 58818.0,
+    "forecast_d1": 48550,
+    "forecast_d": 48050.0
+  },
+  {
+    "time": "16:00",
+    "load": 47456.0,
+    "production": 58111.0,
+    "forecast_d1": 48000,
+    "forecast_d": 47500.0
+  },
+  {
+    "time": "16:15",
+    "load": 47298.0,
+    "production": 59164.0,
+    "forecast_d1": 47700,
+    "forecast_d": 47200.0
+  },
+  {
+    "time": "17:30",
+    "load": 45737.0,
+    "production": 58985.0,
+    "forecast_d1": 46800,
+    "forecast_d": 45600.0
+  },
+  {
+    "time": "18:00",
+    "load": 46315.0,
+    "production": 58479.0,
+    "forecast_d1": 47800,
+    "forecast_d": 46400.0
+  },
+  {
+    "time": "21:30",
+    "load": 49039.0,
+    "production": 65199.0,
+    "forecast_d1": 50300,
+    "forecast_d": 49294.0
+  },
+  {
+    "time": "22:45",
+    "load": 50617.0,
+    "production": 66095.0,
+    "forecast_d1": 51350,
+    "forecast_d": 50113.0
+  },
+  {
+    "time": "23:45",
+    "load": 48284.0,
+    "production": 62965.0,
+    "forecast_d1": 50950,
+    "forecast_d": 49006.0
+  },
+  {
+    "time": "01:30",
+    "load": 44636.0,
+    "production": 54594.0,
+    "forecast_d1": 46100,
+    "forecast_d": 45700.0
+  },
+  {
+    "time": "02:15",
+    "load": 44243.0,
+    "production": 53750.0,
+    "forecast_d1": 44900,
+    "forecast_d": 44150.0
+  },
+  {
+    "time": "03:15",
+    "load": 42716.0,
+    "production": 53875.0,
+    "forecast_d1": 43250,
+    "forecast_d": 42750.0
+  },
+  {
+    "time": "03:45",
+    "load": 41860.0,
+    "production": 53834.0,
+    "forecast_d1": 42800,
+    "forecast_d": 42150.0
+  },
+  {
+    "time": "04:00",
+    "load": 41745.0,
+    "production": 53652.0,
+    "forecast_d1": 42700,
+    "forecast_d": 41800.0
+  },
+  {
+    "time": "05:15",
+    "load": 43636.0,
+    "production": 54796.0,
+    "forecast_d1": 44700,
+    "forecast_d": 43700.0
+  },
+  {
+    "time": "07:00",
+    "load": 52506.0,
+    "production": 61341.0,
+    "forecast_d1": 53700,
+    "forecast_d": 53100.0
+  },
+  {
+    "time": "07:30",
+    "load": 54728.0,
+    "production": 63491.0,
+    "forecast_d1": 55700,
+    "forecast_d": 54700.0
+  },
+  {
+    "time": "07:45",
+    "load": 55447.0,
+    "production": 63979.0,
+    "forecast_d1": 56300,
+    "forecast_d": 55450.0
+  },
+  {
+    "time": "08:00",
+    "load": 56164.0,
+    "production": 63926.0,
+    "forecast_d1": 56900,
+    "forecast_d": 56200.0
+  },
+  {
+    "time": "08:45",
+    "load": 57018.0,
+    "production": 64852.0,
+    "forecast_d1": 57800,
+    "forecast_d": 57100.0
+  },
+  {
+    "time": "09:00",
+    "load": 56690.0,
+    "production": 65761.0,
+    "forecast_d1": 58000,
+    "forecast_d": 57300.0
+  },
+  {
+    "time": "09:15",
+    "load": 56900.0,
+    "production": 67177.0,
+    "forecast_d1": 57700,
+    "forecast_d": 57300.0
+  },
+  {
+    "time": "10:00",
+    "load": 56333.0,
+    "production": 67166.0,
+    "forecast_d1": 57000,
+    "forecast_d": 56300.0
+  },
+  {
+    "time": "11:30",
+    "load": 54565.0,
+    "production": 65128.0,
+    "forecast_d1": 55500,
+    "forecast_d": 54400.0
+  },
+  {
+    "time": "15:30",
+    "load": 48726.0,
+    "production": 59756.0,
+    "forecast_d1": 49100,
+    "forecast_d": 48600.0
+  },
+  {
+    "time": "16:45",
+    "load": 46473.0,
+    "production": 61193.0,
+    "forecast_d1": 47050,
+    "forecast_d": 46600.0
+  },
+  {
+    "time": "17:00",
+    "load": 46094.0,
+    "production": 59960.0,
+    "forecast_d1": 46700,
+    "forecast_d": 46300.0
+  },
+  {
+    "time": "18:30",
+    "load": 47555.0,
+    "production": 59037.0,
+    "forecast_d1": 49200,
+    "forecast_d": 47500.0
+  },
+  {
+    "time": "21:15",
+    "load": 49920.0,
+    "production": 65412.0,
+    "forecast_d1": 50850,
+    "forecast_d": 49685.0
+  },
+  {
+    "time": "23:30",
+    "load": 49539.0,
+    "production": 64829.0,
+    "forecast_d1": 51400,
+    "forecast_d": 50112.0
+  },
+  {
+    "time": "00:00",
+    "load": 48098.0,
+    "production": 55175.0,
+    "forecast_d1": 48500,
+    "forecast_d": 48400.0
+  },
+  {
+    "time": "00:30",
+    "load": 46819.0,
+    "production": 55636.0,
+    "forecast_d1": 47200,
+    "forecast_d": 47100.0
+  },
+  {
+    "time": "00:45",
+    "load": 45251.0,
+    "production": 55154.0,
+    "forecast_d1": 46300,
+    "forecast_d": 46050.0
+  },
+  {
+    "time": "01:00",
+    "load": 44758.0,
+    "production": 55103.0,
+    "forecast_d1": 45400,
+    "forecast_d": 45000.0
+  },
+  {
+    "time": "01:45",
+    "load": 44373.0,
+    "production": 54168.0,
+    "forecast_d1": 45800,
+    "forecast_d": 44950.0
+  },
+  {
+    "time": "02:30",
+    "load": 43755.0,
+    "production": 53392.0,
+    "forecast_d1": 44300,
+    "forecast_d": 44100.0
+  },
+  {
+    "time": "04:15",
+    "load": 41780.0,
+    "production": 53950.0,
+    "forecast_d1": 42600,
+    "forecast_d": 41900.0
+  },
+  {
+    "time": "05:45",
+    "load": 45139.0,
+    "production": 55935.0,
+    "forecast_d1": 46500,
+    "forecast_d": 45550.0
+  },
+  {
+    "time": "06:30",
+    "load": 49735.0,
+    "production": 59606.0,
+    "forecast_d1": 50800,
+    "forecast_d": 50000.0
+  },
+  {
+    "time": "09:30",
+    "load": 57283.0,
+    "production": 66732.0,
+    "forecast_d1": 57400,
+    "forecast_d": 57300.0
+  },
+  {
+    "time": "10:30",
+    "load": 55472.0,
+    "production": 65311.0,
+    "forecast_d1": 56400,
+    "forecast_d": 55500.0
+  },
+  {
+    "time": "11:15",
+    "load": 54708.0,
+    "production": 64624.0,
+    "forecast_d1": 55700,
+    "forecast_d": 54650.0
+  },
+  {
+    "time": "12:15",
+    "load": 54105.0,
+    "production": 65951.0,
+    "forecast_d1": 55500,
+    "forecast_d": 54350.0
+  },
+  {
+    "time": "12:30",
+    "load": 54162.0,
+    "production": 66144.0,
+    "forecast_d1": 55000,
+    "forecast_d": 53900.0
+  },
+  {
+    "time": "15:15",
+    "load": 49650.0,
+    "production": 60172.0,
+    "forecast_d1": 49550,
+    "forecast_d": 49450.0
+  },
+  {
+    "time": "16:30",
+    "load": 46913.0,
+    "production": 61944.0,
+    "forecast_d1": 47400,
+    "forecast_d": 46900.0
+  },
+  {
+    "time": "17:45",
+    "load": 45943.0,
+    "production": 59227.0,
+    "forecast_d1": 47300,
+    "forecast_d": 46000.0
+  },
+  {
+    "time": "19:00",
+    "load": 49406.0,
+    "production": 60042.0,
+    "forecast_d1": 51000,
+    "forecast_d": 49600.0
+  },
+  {
+    "time": "19:30",
+    "load": 48741.0,
+    "production": 59080.0,
+    "forecast_d1": 51900,
+    "forecast_d": 50700.0
+  },
+  {
+    "time": "20:45",
+    "load": 50337.0,
+    "production": 64048.0,
+    "forecast_d1": 51600,
+    "forecast_d": 50388.0
+  },
+  {
+    "time": "03:00",
+    "load": 42767.0,
+    "production": 54022.0,
+    "forecast_d1": 43600,
+    "forecast_d": 43000.0
+  },
+  {
+    "time": "05:00",
+    "load": 42447.0,
+    "production": 54369.0,
+    "forecast_d1": 43900,
+    "forecast_d": 42800.0
+  },
+  {
+    "time": "06:15",
+    "load": 48364.0,
+    "production": 58691.0,
+    "forecast_d1": 49150,
+    "forecast_d": 48250.0
+  },
+  {
+    "time": "07:15",
+    "load": 53610.0,
+    "production": 62209.0,
+    "forecast_d1": 54700,
+    "forecast_d": 53900.0
+  },
+  {
+    "time": "08:30",
+    "load": 56872.0,
+    "production": 64710.0,
+    "forecast_d1": 57600,
+    "forecast_d": 56900.0
+  },
+  {
+    "time": "09:45",
+    "load": 56743.0,
+    "production": 66957.0,
+    "forecast_d1": 57200,
+    "forecast_d": 56800.0
+  },
+  {
+    "time": "10:45",
+    "load": 55302.0,
+    "production": 64900.0,
+    "forecast_d1": 56150,
+    "forecast_d": 55200.0
+  },
+  {
+    "time": "12:00",
+    "load": 54582.0,
+    "production": 66072.0,
+    "forecast_d1": 56000,
+    "forecast_d": 54800.0
+  },
+  {
+    "time": "12:45",
+    "load": 54353.0,
+    "production": 66355.0,
+    "forecast_d1": 55700,
+    "forecast_d": 54350.0
+  },
+  {
+    "time": "13:45",
+    "load": 52622.0,
+    "production": 64485.0,
+    "forecast_d1": 52650,
+    "forecast_d": 52550.0
+  },
+  {
+    "time": "14:30",
+    "load": 51189.0,
+    "production": 60437.0,
+    "forecast_d1": 51400,
+    "forecast_d": 51200.0
+  },
+  {
+    "time": "14:45",
+    "load": 50613.0,
+    "production": 60010.0,
+    "forecast_d1": 50700,
+    "forecast_d": 50750.0
+  },
+  {
+    "time": "17:15",
+    "load": 45925.0,
+    "production": 59962.0,
+    "forecast_d1": 46750,
+    "forecast_d": 45950.0
+  },
+  {
+    "time": "18:15",
+    "load": 46813.0,
+    "production": 58959.0,
+    "forecast_d1": 48500,
+    "forecast_d": 46950.0
+  },
+  {
+    "time": "19:15",
+    "load": 47890.0,
+    "production": 58930.0,
+    "forecast_d1": 51450,
+    "forecast_d": 50150.0
+  },
+  {
+    "time": "20:15",
+    "load": 49943.0,
+    "production": 62914.0,
+    "forecast_d1": 52250,
+    "forecast_d": 50350.0
+  },
+  {
+    "time": "21:00",
+    "load": 50000.0,
+    "production": 64515.0,
+    "forecast_d1": 51400,
+    "forecast_d": 50076.0
+  },
+  {
+    "time": "21:45",
+    "load": 48632.0,
+    "production": 64681.0,
+    "forecast_d1": 49850,
+    "forecast_d": 48666.0
+  },
+  {
+    "time": "22:15",
+    "load": 48780.0,
+    "production": 64825.0,
+    "forecast_d1": 49850,
+    "forecast_d": 48761.0
+  },
+  {
+    "time": "22:30",
+    "load": 49435.0,
+    "production": 65687.0,
+    "forecast_d1": 50300,
+    "forecast_d": 49485.0
+  },
+  {
+    "time": "23:00",
+    "load": 50095.0,
+    "production": 65964.0,
+    "forecast_d1": 52400,
+    "forecast_d": 50741.0
+  },
+  {
+    "time": "23:15",
+    "load": 49733.0,
+    "production": 65482.0,
+    "forecast_d1": 51900,
+    "forecast_d": 50427.0
+  }
+]
