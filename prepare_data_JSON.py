@@ -47,6 +47,13 @@ cols = [
     "Solaire (MW)",
     "Hydraulique (MW)",
     "Bioénergies (MW)",
+    # ajouts pour module flux
+    "Ech. comm. Angleterre (MW)",
+    "Ech. comm. Espagne (MW)",
+    "Ech. comm. Italie (MW)",
+    "Ech. comm. Suisse (MW)",
+    "Ech. comm. Allemagne-Belgique (MW)",
+    "Taux de CO2 (g/kWh)"
 ]
 small = df[cols].copy()
 
@@ -186,6 +193,13 @@ for date in clean_days:
         "Production_totale (MW)",
         "Prévision J-1 (MW)",
         "Prévision J (MW)",
+        # ajouts pour module flux
+        "Ech. comm. Angleterre (MW)",
+        "Ech. comm. Espagne (MW)",
+        "Ech. comm. Italie (MW)",
+        "Ech. comm. Suisse (MW)",
+        "Ech. comm. Allemagne-Belgique (MW)",
+        "Taux de CO2 (g/kWh)"
     ]].copy()
 
     # Format HH:MM pour D3.js
@@ -197,9 +211,22 @@ for date in clean_days:
         "Production_totale (MW)": "production",
         "Prévision J-1 (MW)": "forecast_d1",
         "Prévision J (MW)": "forecast_d",
+        # ajouts pour module flux
+        "Ech. comm. Angleterre (MW)": "exch_uk",
+        "Ech. comm. Espagne (MW)": "exch_es",
+        "Ech. comm. Italie (MW)": "exch_it",
+        "Ech. comm. Suisse (MW)": "exch_ch",
+        "Ech. comm. Allemagne-Belgique (MW)": "exch_de_be",
+        "Taux de CO2 (g/kWh)": "co2_rate"
     })
 
-    records = out[["time", "load", "production", "forecast_d1", "forecast_d"]].to_dict(orient="records")
+    # Liste des champs à conserver dans le JSON
+    fields = [
+        "time", "load", "production", "forecast_d1", "forecast_d",
+        "exch_uk", "exch_es", "exch_it", "exch_ch", "exch_de_be", "co2_rate"
+    ]
+    
+    records = out[fields].to_dict(orient="records")
 
     fname = out_dir / f"day_{date}.json"
     with fname.open("w", encoding="utf-8") as f:
