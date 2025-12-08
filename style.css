@@ -225,16 +225,16 @@ button {
 
 .legend-color {
   width: 14px;
-  height: 3px;
-  border-radius: 999px;
+  height: 14px;          /* ✅ 关键：原来是 3px */
+  border-radius: 4px;
+  display: inline-block;
 }
 
-.legend-color.blue {
-  background: #2563eb;
-}
-.legend-color.orange {
-  background: #fb923c;
-}
+.legend-color.orange { background: #fb923c; }
+.legend-color.green { background: #16a34a; }  /* Été */
+.legend-color.blue { background: #2563eb; }
+.legend-color.red   { background: #dc2626; }  /* Hiver */
+
 .legend-color.gray-dash {
   background: repeating-linear-gradient(
     to right,
@@ -311,4 +311,56 @@ button {
   #timeSlider {
     width: 160px;
   }
+}
+
+/* ===== PROFIL CONSOMMATION – LAYOUT FINAL ===== */
+
+.viz-section {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.viz-left {
+  flex: 1 1 65%;
+  min-width: 620px;
+}
+
+.viz-right {
+  flex: 1 1 30%;
+  max-width: 340px;
+  box-sizing: border-box;
+}
+
+.analysis-green {
+  margin-top: 10px;
+  color: #0f766e;
+  font-style: italic;
+}
+
+.analysis-italic {
+  margin-top: 6px;
+  font-style: italic;
+  color: #444;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.metric-label {
+  color: #555;
+}
+
+.metric-value {
+  font-weight: bold;
+  color: #0f766e;
 }

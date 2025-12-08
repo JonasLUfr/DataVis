@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Profils saisonniers – Visualisation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ============================= -->
+  <!-- NAVBAR                        -->
+  <!-- ============================= -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="navbar-title">Mix électrique français</div>
+        <div class="navbar-subtitle">
+          Visualisation pédagogique – données RTE éco2mix
+        </div>
+      </div>
+    </div>
+    <div class="navbar-right">
+      <div class="nav-link primary">Projet – Groupe 14</div>
+    </div>
+  </nav>
+
+  <!-- ============================= -->
+  <!-- CONTENU PRINCIPAL             -->
+  <!-- ============================= -->
+  <main class="page">
+
+    <header class="page-header">
+      <h1>Profils saisonniers de consommation</h1>
+      <p>
+        Cette visualisation présente les profils moyens de consommation électrique
+        en France selon les quatre saisons (hiver, printemps, été, automne),
+        sur une journée type de 24 heures.
+      </p>
+    </header>
+
+    <!-- ===================================================== -->
+    <!-- SECTION – Profils saisonniers                         -->
+    <!-- ===================================================== -->
+    <section class="viz-section">
+
+      <!-- --------- Colonne gauche : graphique D3 ------------ -->
+      <div class="viz-left">
+
+        <div>
+          <div class="section-title">
+            Profils moyens journaliers par saison
+          </div>
+          <div class="section-subtitle">
+            Pas de temps : 1 heure – moyenne nationale.
+          </div>
+        </div>
+
+        <svg id="seasonChart" width="100%" height="380"></svg>
+
+        <!-- Légende des saisons -->
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color blue"></div>
+            <span>Automne</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color orange"></div>
+            <span>Printemps</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color green"></div>
+            <span>Été</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color red"></div>
+            <span>Hiver</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- --------- Colonne droite : analyse texte ------------ -->
+      <aside class="viz-right">
+
+        <div class="explanation-header">Analyse dynamique</div>
+
+        <div class="explanation-body">
+
+          <p id="analysisLevel">
+            Survolez le graphique pour afficher l’analyse horaire.
+          </p>
+
+          <p id="analysisSeasonality" style="color:#0f766e;font-style:italic;">
+            —
+          </p>
+
+          <p id="analysisTrend" style="font-style:italic;color:#374151;">
+            —
+          </p>
+
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-label">Heure analysée</div>
+          <div class="metric-value" id="metricHour">—</div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-label">Écart global (4 saisons)</div>
+          <div class="metric-value" id="metricGlobal">—</div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-label">Écart Hiver – Été</div>
+          <div class="metric-value" id="metricWS">—</div>
+        </div>
+
+        <ul class="bullet-list">
+          <li>
+            L’écart global mesure la dispersion entre les quatre saisons à une
+            heure donnée.
+          </li>
+          <li>
+            L’écart hiver–été permet d’évaluer l’impact du chauffage électrique.
+          </li>
+        </ul>
+
+      </aside>
+    </section>
+
+  </main>
+
+  <!-- ============================= -->
+  <!-- SCRIPT SAISONNIER             -->
+  <!-- ============================= -->
+  <script>
+    const svg = d3.select("#seasonChart");
+    const svgNode = svg.node();
+    const svgWidth = svgNode.getBoundingClientRect().width;
+    const svgHeight = +svg.attr("height");
+
+    const margin = { top: 30, right: 20, bottom: 40, left: 60 };
+    const width = svgWidth - margin.left - margin.right;
+    const height = svgHeight - margin.top - margin.bottom;
+
+    const chartG = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const xScale = d3.scaleLinear().domain([0, 23]).range([0, width]);
+    const yScale = d3.scaleLinear().range([height, 0]);
+
+    const xAxisGroup = chartG.append("g")
+      .attr("transform", `translate(0,${height})`);
+    const yAxisGroup = chartG.append("g");
+
+    const line = d3.line()
+      .x(d => xScale(d.hour))
+      .y(d => yScale(d.load));
+
+    d3.json("data/consumption_profiles/season_profile.json").then(data => {
+
+      const seasons = Object.keys(data);
+      const allValues = seasons.flatMap(s => data[s].map(d => d.load));
+      yScale.domain([0, d3.max(allValues)]);
+
+      xAxisGroup.call(d3.axisBottom(xScale).ticks(8));
+      yAxisGroup.call(d3.axisLeft(yScale).ticks(6));
+
+      const color = d3.scaleOrdinal()
+        .domain(seasons)
+        .range(["#2563eb", "#fb923c", "#16a34a", "#dc2626"]);
+
+      seasons.forEach(season => {
+        chartG.append("path")
+          .datum(data[season])
+          .attr("fill", "none")
+          .attr("stroke", color(season))
+          .attr("stroke-width", 2)
+          .attr("d", line);
+      });
+
+      const hoverLine = chartG.append("line")
+        .attr("y1", 0)
+        .attr("y2", height)
+        .attr("stroke", "#374151")
+        .style("opacity", 0);
+
+      chartG.append("rect")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("fill", "transparent")
+        .on("mousemove", function (event) {
+          const [mx] = d3.pointer(event);
+          const hour = Math.round(xScale.invert(mx));
+
+          hoverLine
+            .attr("x1", xScale(hour))
+            .attr("x2", xScale(hour))
+            .style("opacity", 1);
+
+          let values = {};
+          seasons.forEach(s => {
+            const d = data[s].find(p => p.hour === hour);
+            if (d) values[s] = d.load;
+          });
+
+          const maxVal = Math.max(...Object.values(values));
+          const minVal = Math.min(...Object.values(values));
+          const ecartGlobal = Math.round(maxVal - minVal);
+          const ecartWS = Math.round(values["Winter"] - values["Summer"]);
+
+          document.getElementById("metricHour").textContent = hour + "h";
+          document.getElementById("metricGlobal").textContent = ecartGlobal + " MW";
+          document.getElementById("metricWS").textContent = ecartWS + " MW";
+
+          if (ecartGlobal > 25000) {
+            document.getElementById("analysisSeasonality").textContent =
+              "La dispersion saisonnière est extrêmement marquée à cette heure.";
+          } else if (ecartGlobal > 15000) {
+            document.getElementById("analysisSeasonality").textContent =
+              "La saisonnalité reste clairement visible dans les usages.";
+          } else {
+            document.getElementById("analysisSeasonality").textContent =
+              "Les profils saisonniers sont relativement proches.";
+          }
+
+          if (hour < 6) {
+            document.getElementById("analysisTrend").textContent =
+              "Cette heure correspond au creux nocturne de la demande.";
+          } else if (hour < 12) {
+            document.getElementById("analysisTrend").textContent =
+              "On observe la montée progressive de la consommation du matin.";
+          } else if (hour < 18) {
+            document.getElementById("analysisTrend").textContent =
+              "La demande se stabilise au cours de l’après-midi.";
+          } else if (hour < 20) {
+            document.getElementById("analysisTrend").textContent =
+              "Le pic principal de consommation apparaît en début de soirée.";
+          } else {
+            document.getElementById("analysisTrend").textContent =
+              "La tendance se stabiliser la nuit.";
+          }
+
+          if (ecartWS > 22000) {
+            document.getElementById("analysisLevel").textContent =
+              "L’hiver domine très fortement la consommation à cette heure.";
+          } else if (ecartWS > 20000) {
+            document.getElementById("analysisLevel").textContent =
+              "L’hiver reste significativement au-dessus de l’été.";
+          } else {
+            document.getElementById("analysisLevel").textContent =
+              "L’écart hiver–été reste modéré.";
+          }
+        })
+        .on("mouseleave", function () {
+          hoverLine.style("opacity", 0);
+          document.getElementById("metricHour").textContent = "—";
+          document.getElementById("metricGlobal").textContent = "—";
+          document.getElementById("metricWS").textContent = "—";
+          document.getElementById("analysisLevel").textContent =
+            "Survolez le graphique pour afficher l’analyse horaire.";
+          document.getElementById("analysisSeasonality").textContent = "—";
+          document.getElementById("analysisTrend").textContent = "—";
+        });
+
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Comparaison Jour ouvré / Week-end</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ============================= -->
+  <!-- NAVBAR                        -->
+  <!-- ============================= -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="navbar-title">Mix électrique français</div>
+        <div class="navbar-subtitle">
+          Visualisation pédagogique – données RTE éco2mix
+        </div>
+      </div>
+    </div>
+    <div class="navbar-right">
+      <div class="nav-link primary">Projet – Groupe 14</div>
+    </div>
+  </nav>
+
+  <!-- ============================= -->
+  <!-- CONTENU PRINCIPAL             -->
+  <!-- ============================= -->
+  <main class="page">
+
+    <header class="page-header">
+      <h1>Comparaison travail / week-end</h1>
+      <p>
+        Cette visualisation compare les profils moyens horaires de consommation
+        électrique en France pour les jours ouvrés (lundi–vendredi) et pour les
+        week-ends (samedi–dimanche).
+      </p>
+    </header>
+
+    <!-- ===================================================== -->
+    <!-- SECTION – Weekday vs Weekend                          -->
+    <!-- ===================================================== -->
+    <section class="viz-section">
+
+      <!-- --------- Colonne gauche : graphique D3 ------------ -->
+      <div class="viz-left">
+
+        <div>
+          <div class="section-title">
+            Profils moyens – Jour ouvré vs Week-end
+          </div>
+          <div class="section-subtitle">
+            Pas de temps : 1 heure – année 2025.
+          </div>
+        </div>
+
+        <svg id="wwChart" width="100%" height="380"></svg>
+
+        <!-- Légende -->
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color blue"></div>
+            <span>Jour ouvré</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color orange"></div>
+            <span>Week-end</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- --------- Colonne droite : analyse texte ------------ -->
+      <aside class="viz-right">
+
+        <div class="explanation-header">Analyse automatique</div>
+
+        <div class="explanation-body" id="analysisText">
+          Les profils moyens sont calculés à partir de l’ensemble des journées
+          disponibles en 2025. Survolez le graphique pour afficher les valeurs.
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-label">Heure analysée</div>
+          <div class="metric-value" id="metricHour">—</div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-label">Écart ouvré – week-end</div>
+          <div class="metric-value" id="metricGap">—</div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-label">Pic principal (ouvré)</div>
+          <div class="metric-value" id="metricPeak">—</div>
+        </div>
+
+        <ul class="bullet-list" id="bulletList">
+          <li>
+            Le profil en jour ouvré reflète l’activité économique, les trajets
+            domicile–travail et les usages professionnels.
+          </li>
+          <li>
+            Le profil du week-end met davantage en évidence des usages domestiques
+            répartis dans la journée.
+          </li>
+        </ul>
+
+      </aside>
+    </section>
+
+  </main>
+
+  <!-- ============================= -->
+  <!-- SCRIPT PRINCIPAL              -->
+  <!-- ============================= -->
+  <script>
+    // =========================================================
+    // A. Génération des jours 2025
+    // =========================================================
+    const startDate = new Date("2025-01-01");
+    const endDate = new Date("2025-11-27");
+
+    const availableDays = [];
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      availableDays.push(`${y}-${m}-${day}`);
+    }
+
+    async function safeReadJson(url) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          return JSON.parse(text.replace(/NaN/gi, "null").replace(/'/g, '"'));
+        }
+      } catch {
+        return null;
+      }
+    }
+
+    // =========================================================
+    // B. Construction profils moyens ouvré / week-end (CORRIGÉ)
+    // =========================================================
+    async function buildWeekdayWeekendProfiles() {
+
+      const weekdayBuckets = new Map();
+      const weekendBuckets = new Map();
+
+      for (let h = 0; h < 24; h++) {
+        weekdayBuckets.set(h, []);
+        weekendBuckets.set(h, []);
+      }
+
+      for (const dayStr of availableDays) {
+        const date = new Date(dayStr);
+        const isWeekend = (date.getDay() === 0 || date.getDay() === 6);
+
+        const url = `data/dailydata_clean/day_${dayStr}.json`;
+        const raw = await safeReadJson(url);
+        if (!raw || !raw.length) continue;
+
+        raw.forEach(d => {
+          if (!d.time || d.load === null || isNaN(d.load)) return;
+
+          const [h] = d.time.split(":").map(Number); // ✅ heure correcte
+
+          if (!weekdayBuckets.has(h)) return;
+
+          if (isWeekend) {
+            weekendBuckets.get(h).push(+d.load);
+          } else {
+            weekdayBuckets.get(h).push(+d.load);
+          }
+        });
+      }
+
+      function buildProfile(map) {
+        return Array.from(map.entries()).map(([h, values]) => ({
+          hour: h,
+          load: values.length ? d3.mean(values) : null
+        }));
+      }
+
+      return {
+        weekday: buildProfile(weekdayBuckets),
+        weekend: buildProfile(weekendBuckets)
+      };
+    }
+
+    // =========================================================
+    // C. Initialisation D3
+    // =========================================================
+    const svg = d3.select("#wwChart");
+    const svgNode = svg.node();
+    const svgWidth = svgNode.getBoundingClientRect().width;
+    const svgHeight = +svg.attr("height");
+
+    const margin = { top: 30, right: 20, bottom: 40, left: 60 };
+    const width = svgWidth - margin.left - margin.right;
+    const height = svgHeight - margin.top - margin.bottom;
+
+    const chartG = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const xScale = d3.scaleLinear().domain([0, 23]).range([0, width]);
+    const yScale = d3.scaleLinear().range([height, 0]);
+
+    const xAxisGroup = chartG.append("g")
+      .attr("transform", `translate(0,${height})`);
+    const yAxisGroup = chartG.append("g");
+
+    const line = d3.line()
+      .x(d => xScale(d.hour))
+      .y(d => yScale(d.load));
+
+    // =========================================================
+    // D. Rendu graphique + analyse
+    // =========================================================
+    buildWeekdayWeekendProfiles().then(result => {
+
+      const { weekday, weekend } = result;
+
+      const allValues = weekday.concat(weekend)
+        .map(d => d.load)
+        .filter(v => v !== null && !isNaN(v));
+
+      const maxY = d3.max(allValues) || 80000;
+      yScale.domain([0, maxY]);
+
+      xAxisGroup.call(d3.axisBottom(xScale).ticks(8));
+      yAxisGroup.call(d3.axisLeft(yScale).ticks(6));
+
+      chartG.append("path")
+        .datum(weekday)
+        .attr("fill", "none")
+        .attr("stroke", "#2563eb")
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+      chartG.append("path")
+        .datum(weekend)
+        .attr("fill", "none")
+        .attr("stroke", "#fb923c")
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+      const peakWeekday = weekday.reduce((a, b) => b.load > a.load ? b : a);
+      document.getElementById("metricPeak").textContent =
+        `${peakWeekday.hour}h – ${Math.round(peakWeekday.load)} MW`;
+
+      const hoverLine = chartG.append("line")
+        .attr("y1", 0)
+        .attr("y2", height)
+        .attr("stroke", "#374151")
+        .style("opacity", 0);
+
+      chartG.append("rect")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("fill", "transparent")
+        .on("mousemove", function (event) {
+          const [mx] = d3.pointer(event);
+          const hour = Math.round(xScale.invert(mx));
+
+          hoverLine
+            .attr("x1", xScale(hour))
+            .attr("x2", xScale(hour))
+            .style("opacity", 1);
+
+          const w1 = weekday.find(d => d.hour === hour)?.load;
+          const w2 = weekend.find(d => d.hour === hour)?.load;
+
+          const gap = (w1 !== null && w2 !== null)
+            ? Math.round(w1 - w2)
+            : null;
+
+          document.getElementById("metricHour").textContent = hour + "h";
+          document.getElementById("metricGap").textContent =
+            gap !== null ? gap + " MW" : "—";
+
+          let text = `<strong>${hour}h</strong><br/>`;
+          if (w1 && w2) {
+            text += `Jour ouvré : ${Math.round(w1)} MW<br/>`;
+            text += `Week-end : ${Math.round(w2)} MW<br/>`;
+          }
+
+          if (hour >= 7 && hour <= 9) {
+            text += "Heure de pointe liée aux déplacements professionnels.";
+          } else if (hour >= 18 && hour <= 21) {
+            text += "Période de pointe résidentielle en soirée.";
+          }
+
+          document.getElementById("analysisText").innerHTML = text;
+        })
+        .on("mouseleave", function () {
+          hoverLine.style("opacity", 0);
+          document.getElementById("metricHour").textContent = "—";
+          document.getElementById("metricGap").textContent = "—";
+        });
+
+    });
+  </script>
+
+</body>
+</html>
