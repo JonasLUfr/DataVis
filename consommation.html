@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mix électrique français – Visualisation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Feuille de style principale -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- D3.js v7 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+
+<body>
+  <!-- ============================= -->
+  <!-- CONTENU PRINCIPAL            -->
+  <!-- ============================= -->
+  <main class="page">
+    <header class="page-header">
+      <h1>Équilibre offre–demande</h1>
+      <p>
+        Visualisation de la consommation réelle, de la production totale et des
+        prévisions RTE (J-1 / J). Utilisez le sélecteur pour explorer
+        l'année 2025 jour par jour ou mois par mois.
+      </p>
+    </header>
+
+    <!-- ===================================================== -->
+    <!-- SECTION 1 – Courbe de charge / production (Jour/Mois) -->
+    <!-- ===================================================== -->
+    <section class="viz-section" id="section-day-balance">
+      <!-- --------- Colonne gauche : graphique D3 ------------ -->
+      <div class="viz-left">
+        <div>
+          <div class="section-title">
+            <span id="modeTitlePrefix">Courbe de charge &amp; production –</span>
+            <span id="titleDay"></span>
+          </div>
+          <div class="section-subtitle" id="subtitleText">
+            Pas de temps : 15 minutes – données France entière (vue journalière).
+          </div>
+        </div>
+
+        <svg id="dayChart" width="100%" height="380"></svg>
+
+        <!-- Légende des courbes -->
+        <div class="legend" id="legend">
+          <div class="legend-item">
+            <div class="legend-color blue"></div>
+            <span>Consommation réelle</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color orange"></div>
+            <span>Production totale</span>
+          </div>
+          <div class="legend-item legend-forecast">
+            <div class="legend-color gray-dash"></div>
+            <span>Prévision J-1</span>
+          </div>
+        </div>
+
+        <!-- Contrôles : mode Jour / Mois + slider temporel -->
+        <div class="controls">
+          <div class="controls-left">
+            <span class="tag">Mode</span>
+            <button id="modeDay" class="toggle-btn active">Jour</button>
+            <button id="modeMonth" class="toggle-btn">Mois</button>
+          </div>
+          <div class="controls-right">
+            <span id="sliderLabel" class="slider-label"></span>
+            <input type="range" id="timeSlider" min="0" max="0" value="0" />
+          </div>
+        </div>
+      </div>
+
+      <!-- --------- Colonne droite : analyse texte ------------ -->
+      <aside class="viz-right">
+        <div class="explanation-header">Analyse automatique</div>
+        <div class="explanation-body" id="analysisText">
+          Chargement des données…
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-label">Pic de consommation</div>
+          <div class="metric-value" id="metricPeak"></div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-label">
+            Déficit maximal (consommation &gt; production)
+          </div>
+          <div class="metric-value" id="metricDeficit"></div>
+        </div>
+
+        <!-- Ce bloc doit disparaître en mode mensuel -->
+        <div class="metric-row" id="metricForecastRow">
+          <div class="metric-label">Écart moyen prévision J-1 vs réel</div>
+          <div class="metric-value" id="metricForecastError"></div>
+        </div>
+
+        <ul class="bullet-list" id="bulletList">
+          <li>
+            La zone où la courbe bleue dépasse l'orange correspond aux moments
+            où la France doit augmenter ses imports ou activer du gaz / fioul.
+          </li>
+          <li>
+            Comparez les jours d’hiver et d’été pour observer l’impact du
+            chauffage électrique sur le pic de 19&nbsp;h.
+          </li>
+        </ul>
+      </aside>
+    </section>
+  </main>
+
+  <script src="js/viz_conso.js"></script>
+</body>
