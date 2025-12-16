@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mix électrique français – Visualisation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Feuille de style principale -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- D3.js v7 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Équilibre offre–demande</h1>
+      <p>
+        Visualisation de la consommation réelle, de la production totale et des
+        prévisions RTE (J-1 / J). Utilisez le sélecteur pour explorer
+        l'année 2025 jour par jour ou mois par mois.
+      </p>
+    </header>
+    <section class="viz-section" style="margin-top: 40px;">
+        <div class="viz-left">
+            <div>
+                <div class="section-title">
+                    <span id="fluxTitlePrefix">Interconnexions –</span>
+                    <span id="fluxTitleDate"></span>
+                </div>
+                <div class="section-subtitle">
+                    Visualisation des échanges transfrontaliers et de l'intensité carbone.
+                </div>
+            </div>
+            
+            <div class="legend" style="margin-bottom: 10px;">
+                <div class="legend-item">
+                    <span style="color:#2ecc71; font-weight:bold; font-size:1.2em;">&#8594;</span> 
+                    <span>Export (Vente)</span>
+                </div>
+                <div class="legend-item">
+                    <span style="color:#e74c3c; font-weight:bold; font-size:1.2em;">&#8594;</span> 
+                    <span>Import (Achat)</span>
+                </div>
+                <div class="legend-item" style="margin-left: 15px;">
+                    <div class="legend-color" style="background: linear-gradient(to right, #2ecc71, #f1c40f, #e74c3c); width: 40px;"></div>
+                    <span>Couleur France = Intensité CO2</span>
+                </div>
+            </div>
+
+            <div id="flux-chart" style="height: 500px; display:flex; justify-content:center; background: #fff; border-radius: 8px;"></div>
+
+            <div class="controls">
+                <div class="controls-left">
+                    <span class="tag">Mode</span>
+                    <button id="modeDayFlux" class="toggle-btn active">Jour</button>
+                    <button id="modeMonthFlux" class="toggle-btn">Mois</button>
+                </div>
+                <div class="controls-right">
+                    <span id="sliderLabelFlux" class="slider-label"></span>
+                    <input type="range" id="timeSliderFlux" min="0" max="0" value="0" />
+                </div>
+            </div>
+        </div>
+
+        <aside class="viz-right" style="flex: 1;">
+            <div class="explanation-header">Analyse des flux</div>
+            
+            <div class="explanation-body" id="fluxAnalysisText">
+                Chargement des données...
+            </div>
+            <br>
+
+            <div class="metric-row">
+                <div class="metric-label">Solde Commercial (Total)</div>
+                <div class="metric-value" id="fluxMetricBalance">-</div>
+            </div>
+            <div class="metric-row">
+                <div class="metric-label">Partenaire Principal (Vol. Max)</div>
+                <div class="metric-value" id="fluxMetricPartner">-</div>
+            </div>
+            <div class="metric-row">
+                <div class="metric-label">Intensité Carbone (Prod. FR)</div>
+                <div class="metric-value" id="fluxMetricCO2">-</div>
+            </div>
+
+            <ul class="bullet-list" id="fluxBulletList">
+                <li>
+                    <strong>Export (Vert) :</strong> La France valorise son excédent bas carbone chez ses voisins.
+                </li>
+                <li>
+                    <strong>Import (Rouge) :</strong> La France dépend de l'extérieur. <em>Note : Si l'import vient d'Allemagne ou d'Espagne, l'impact carbone réel est souvent plus élevé que le taux affiché ici, dû à une production énergétique plus carbonée.</em>
+                </li>
+            </ul>
+        </aside>
+    </section>
+  </main>
+  <script src="js/viz_flux.js"></script>
+</body>
