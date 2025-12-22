@@ -364,3 +364,117 @@ button {
   font-weight: bold;
   color: #0f766e;
 }
+
+/* ===== SEASONAL RENEW (styles from seasonal_renew.html) ===== */
+.s-tooltip{
+  position:absolute; pointer-events:none; background:#fff;
+  border:1px solid rgba(0,0,0,.12); border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.10);
+  padding:10px 12px; font-size:12px; display:none; z-index:10;
+}
+
+.story-paragraph{
+  margin: 10px 0 14px 0;
+  color: #334155;
+  line-height: 1.45;
+  font-size: 13px;
+}
+
+.story-cards{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.story-card{
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.story-card .kicker{
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.story-card .big{
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.story-card .meta{
+  font-size: 12px;
+  color: #475569;
+}
+
+/* Petite barre d’accent en haut */
+.story-card::before{
+  content:"";
+  position:absolute;
+  left:0; top:0;
+  height:6px; width:100%;
+  opacity: .95;
+}
+
+/* Accents par saison */
+.story-card.s-hiver{
+  background: linear-gradient(180deg, rgba(30,64,175,.09), rgba(255,255,255,1) 55%);
+}
+.story-card.s-hiver::before{ background: #1e40af; }
+.story-card.s-hiver .kicker{ color:#1e40af; }
+
+.story-card.s-printemps{
+  background: linear-gradient(180deg, rgba(22,163,74,.10), rgba(255,255,255,1) 55%);
+}
+.story-card.s-printemps::before{ background: #16a34a; }
+.story-card.s-printemps .kicker{ color:#16a34a; }
+
+.story-card.s-ete{
+  background: linear-gradient(180deg, rgba(234,88,12,.10), rgba(255,255,255,1) 55%);
+}
+.story-card.s-ete::before{ background: #ea580c; }
+.story-card.s-ete .kicker{ color:#ea580c; }
+
+.story-card.s-automne{
+  background: linear-gradient(180deg, rgba(147,51,234,.08), rgba(255,255,255,1) 55%);
+}
+.story-card.s-automne::before{ background: #9333ea; }
+.story-card.s-automne .kicker{ color:#9333ea; }
+
+.story-card .big,
+.story-card .value{
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+/* Responsive: cartes en 1 colonne */
+@media (max-width: 900px){
+  .story-cards{ grid-template-columns: 1fr; }
+}
+
+/* ===== PROD FILIERE (add-on) ===== */
+.f-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.10);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.3;
+  display: none;
+  z-index: 10;
+  max-width: 260px;
+}
+.f-legend-click { cursor: pointer; }
+.f-muted { opacity: 0.20; }
