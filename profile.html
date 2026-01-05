@@ -9,7 +9,7 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
-<body>
+<body class="profile-page">
 
   <!-- ============================= -->
   <!-- NAVBAR                        -->
@@ -269,6 +269,13 @@
         });
 
     });
+  </script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("embed") === "1") {
+      const navbar = document.querySelector(".navbar");
+      if (navbar) navbar.remove();
+    }
   </script>
 </body>
 </html>

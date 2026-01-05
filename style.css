@@ -313,8 +313,7 @@ button {
   }
 }
 
-/* ===== PROFIL CONSOMMATION – LAYOUT FINAL ===== */
-
+/* ===== PROFIL CONSOMMATION – LAYOUT FINAL ===== 
 .viz-section {
   display: flex;
   gap: 28px;
@@ -332,7 +331,7 @@ button {
   max-width: 340px;
   box-sizing: border-box;
 }
-
+*/
 .analysis-green {
   margin-top: 10px;
   color: #0f766e;

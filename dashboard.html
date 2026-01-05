@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mix électrique français – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: rgba(15, 23, 42, 0.10);
+      --shadow: 0 12px 28px rgba(2, 6, 23, 0.08);
+      --shadow-soft: 0 8px 20px rgba(2, 6, 23, 0.06);
+      --radius: 16px;
+      --green: #047857;
+      --green-2: #065f46;
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ===== Top bar ===== */
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: linear-gradient(90deg, var(--green), #0f766e);
+      color: #fff;
+      box-shadow: 0 10px 25px rgba(2,6,23,0.15);
+    }
+
+    .topbar-inner{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 16px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width: 280px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;
+      background: #a7f3d0;
+      box-shadow: 0 0 0 4px rgba(167,243,208,0.25);
+    }
+    .brand-title{
+      font-weight: 800;
+      letter-spacing: .2px;
+      line-height: 1.05;
+    }
+    .brand-sub{
+      font-size: .88rem;
+      opacity: .9;
+      margin-top: 3px;
+    }
+
+    /* ===== Simple mini-nav (anchors) ===== */
+    .mini-nav{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+    .mini-nav a{
+      color:#eafff7;
+      text-decoration:none;
+      font-weight:700;
+      font-size:.9rem;
+      padding:8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.08);
+      transition: transform .12s ease, background .12s ease;
+    }
+    .mini-nav a:hover{
+      background: rgba(255,255,255,0.16);
+      transform: translateY(-1px);
+    }
+
+    /* ===== Page layout ===== */
+    .page{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 26px 16px 56px;
+    }
+
+    .hero{
+      background: radial-gradient(1200px 500px at 20% 0%, rgba(4,120,87,0.12), transparent 55%),
+                  radial-gradient(900px 400px at 100% 10%, rgba(14,116,144,0.10), transparent 60%),
+                  var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      padding: 18px 18px;
+      margin-bottom: 18px;
+    }
+    .hero h1{
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+      letter-spacing: .2px;
+    }
+    .hero p{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 980px;
+    }
+
+    .progress{
+      margin-top: 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+    }
+    .pill{
+      font-size: .88rem;
+      color: #0b3b2a;
+      background: rgba(167,243,208,0.55);
+      border: 1px solid rgba(4,120,87,0.18);
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    /* ===== Sections / cards ===== */
+    .section{
+      margin-top: 20px;
+      position: relative;
+    }
+
+    .divider{
+      height: 1px;
+      width: 100%;
+      margin: 22px 0;
+      background: linear-gradient(90deg, transparent, rgba(15,23,42,0.12), transparent);
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header{
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid rgba(15,23,42,0.08);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 16px;
+    }
+
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      margin-bottom: 6px;
+    }
+    .kicker .num{
+      width: 26px;
+      height: 26px;
+      border-radius: 9px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: rgba(4,120,87,0.10);
+      color: var(--green-2);
+      border: 1px solid rgba(4,120,87,0.18);
+      font-size: .9rem;
+    }
+
+    .card-title{
+      margin: 0 0 6px;
+      font-size: 1.25rem;
+    }
+    .card-desc{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 920px;
+    }
+
+    .why{
+      min-width: 260px;
+      max-width: 360px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(2,6,23,0.03);
+      border: 1px solid rgba(2,6,23,0.06);
+      color: #334155;
+      font-size: .92rem;
+      line-height: 1.35;
+    }
+    .why strong{ color: #0f172a; }
+
+    .card-body{
+      padding: 16px 16px 18px;
+      background: linear-gradient(180deg, rgba(2,6,23,0.02), transparent 30%);
+    }
+
+    .frame-wrap{
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(15,23,42,0.10);
+      box-shadow: 0 14px 28px rgba(2,6,23,0.10);
+      background: #fff;
+    }
+
+    iframe{
+      display:block;
+      width: 100%;
+      border: 0;
+      background: #fff;
+    }
+
+    /* Heights: adjust once, done. */
+    .h-index{ height: 860px; }
+    .h-profile{ height: 760px; }
+    .h-week{ height: 760px; }
+
+    .footer{
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: .95rem;
+      text-align: center;
+    }
+
+    /* Responsive: stack "why" box */
+    @media (max-width: 880px){
+      .card-header{
+        flex-direction: column;
+      }
+      .why{
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="dot"></div>
+        <div>
+          <div class="brand-title">Mix électrique français</div>
+          <div class="brand-sub">Dashboard intégré — données RTE éco2mix</div>
+        </div>
+      </div>
+
+      <nav class="mini-nav">
+        <a href="#s1">Offre–Demande</a>
+        <a href="#s2">Saisonnalité</a>
+        <a href="#s3">Ouvré vs Week-end</a>
+      </nav>
+    </div>
+  </div>
+
+  <main class="page">
+
+    <section class="hero">
+      <h1>Comprendre la consommation électrique : structure, saisonnalité et usages</h1>
+      <p>
+        Cette page regroupe trois visualisations complémentaires. On part d’abord de l’équilibre offre–demande,
+        puis on explique <em>pourquoi</em> la consommation change selon les saisons, et enfin comment les usages
+        diffèrent entre jours ouvrés et week-ends.
+      </p>
+      <div class="progress">
+        <span class="pill">1) Vue globale →</span>
+        <span class="pill">2) Effet climat (saisons) →</span>
+        <span class="pill">3) Effet usages (travail/week-end)</span>
+      </div>
+    </section>
+
+    <!-- ===== Section 1 ===== -->
+    <section class="section" id="s1">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="kicker"><span class="num">1</span>Point de départ</div>
+            <h2 class="card-title">Équilibre production – consommation (journalier / mensuel)</h2>
+            <p class="card-desc">
+              Visualisation de la consommation réelle, de la production totale et des prévisions (J-1).
+              Le slider permet d’explorer l’année et d’observer les périodes de tension offre–demande.
+            </p>
+          </div>
+          <div class="why">
+            <strong>Pourquoi c’est utile ?</strong><br/>
+            Situer les pics, déficits et la “forme” d’une journée type avant d’analyser les causes
+            (climat & usages).
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="frame-wrap">
+            <iframe class="h-index" src="Index.html" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ===== Section 2 ===== -->
+    <section class="section" id="s2">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="kicker"><span class="num">2</span>Explication (climat)</div>
+            <h2 class="card-title">Profils saisonniers de consommation</h2>
+            <p class="card-desc">
+              Comparaison des profils moyens (hiver, printemps, été, automne) sur une journée type.
+              L’analyse dynamique met en évidence les écarts entre saisons selon l’heure.
+            </p>
+          </div>
+          <div class="why">
+            <strong>Ce qu’on cherche à montrer</strong><br/>
+            La saisonnalité n’est pas uniforme : elle se renforce surtout aux heures clés (matin/soir),
+            liée au chauffage / au climat.
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="frame-wrap">
+            <iframe class="h-profile" src="profile.html" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ===== Section 3 ===== -->
+    <section class="section" id="s3">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="kicker"><span class="num">3</span>Explication (usages)</div>
+            <h2 class="card-title">Comparaison jour ouvré vs week-end</h2>
+            <p class="card-desc">
+              Profils horaires moyens sur l’ensemble de 2025 : on compare l’effet de l’activité économique
+              (jours ouvrés) et des usages plus domestiques (week-ends).
+            </p>
+          </div>
+          <div class="why">
+            <strong>À interpréter</strong><br/>
+            Les écarts en journée reflètent l’activité professionnelle, tandis que le soir converge vers
+            des usages résidentiels.
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="frame-wrap">
+            <iframe class="h-week" src="weekday_weekend.html" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      Astuce : si tu veux enlever les headers répétés dans chaque iframe, on peut activer un mode “embed”
+      sans toucher à la logique D3 (juste masquer le navbar).
+    </div>
+  </main>
+</body>
+</html>
