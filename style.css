@@ -1,4 +1,4 @@
-/* ====== 全局样式 ====== */
+
 :root {
   --green: #047857;
   --green-light: #10b981;
@@ -27,7 +27,7 @@ a {
   color: inherit;
 }
 
-/* ====== 顶部导航栏 ====== */
+/* ====== NAVBAR ====== */
 .navbar {
   position: sticky;
   top: 0;
@@ -84,7 +84,7 @@ a {
   font-weight: 600;
 }
 
-/* ====== 页面布局 ====== */
+
 .page {
   max-width: 1200px;
   margin: 1.5rem auto 3rem;
@@ -105,7 +105,7 @@ a {
   font-size: 0.9rem;
 }
 
-/* ====== 模块布局（图左文右） ====== */
+
 .viz-section {
   background: var(--card-bg);
   border-radius: 1rem;
@@ -142,7 +142,7 @@ a {
   color: var(--text-muted);
 }
 
-/* ====== 控制条：模式按钮 + 滑条 ====== */
+
 .controls {
   display: flex;
   align-items: center;
@@ -166,7 +166,7 @@ a {
   gap: 0.6rem;
 }
 
-/* Toggle 按钮 */
+
 .toggle-btn {
   border: none;
   outline: none;
@@ -203,12 +203,12 @@ a {
   font-weight: 500;
 }
 
-/* ====== 通用按钮（目前只用在导航） ====== */
+
 button {
   font-family: inherit;
 }
 
-/* ====== 图例样式 ====== */
+
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -225,7 +225,7 @@ button {
 
 .legend-color {
   width: 14px;
-  height: 14px;          /* ✅ 关键：原来是 3px */
+  height: 14px;          
   border-radius: 4px;
   display: inline-block;
 }
@@ -300,13 +300,13 @@ button {
   font-weight: 600;
 }
 
-/* ====== 响应式布局 ====== */
+
 @media (max-width: 900px) {
   .viz-section {
     flex-direction: column;
   }
   .viz-right {
-    order: -1; /* 手机上先读文字，再看图 */
+    order: -1; 
   }
   #timeSlider {
     width: 160px;
