@@ -1,7 +1,5 @@
 /**
- * Module : Visualisation des Flux Transfrontaliers & CO2
- * Fichier : js/viz_flux.js
- * Dépendances : D3.js v7, TopoJSON (optionnel, ici GeoJSON)
+ * Module : Visualisation Flux (Version Finale Debuggée)
  */
 
 const FluxApp = {
@@ -10,68 +8,79 @@ const FluxApp = {
         startDate: new Date("2025-01-01"),
         endDate: new Date("2025-11-27"),
         geoUrl: "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson",
-        // Coordonnées GPS des centres (Pays/Zones)
+        
+        storyDates: {
+            "event1": "2025-01-14", // Grand Froid 
+            "event2": "2025-06-28", // Été creux
+            "event3": "2025-09-30"  // record export
+        },
+
+        // Coordonnées GPS (Version espacée)
         coords: {
-            "FR": [2.5, 46.5],    // France (Centre)
-            "UK": [-1.5, 52.0],   // Royaume-Uni
-            "BE/DE": [6.5, 50.5], // Moyenne Belgique/Allemagne
-            "CH": [8.2, 46.8],    // Suisse
-            "IT": [10.5, 44.5],   // Italie
-            "ES": [-3.5, 40.0]    // Espagne
+            "FR": [2.5, 48.5],
+            "UK": [-1.5, 52.0],
+            "BE/DE": [6.5, 50.5],
+            "CH": [8.2, 46.8],
+            "IT": [10.5, 44.5],
+            "ES": [-2.5, 42.0] 
+        },
+
+        // Mapping Data -> GeoJSON
+        isoMap: {
+            "UK": ["GBR"], 
+            "BE/DE": ["BEL", "DEU"], 
+            "CH": ["CHE"], 
+            "IT": ["ITA"], 
+            "ES": ["ESP"],
+            "FR": ["FRA"]
+        },
+        
+        colors: {
+            export: "#2ecc71", // Vert
+            import: "#e74c3c", // Rouge
+            neutral: "#e5e7eb" // Gris
         }
     },
 
-    // --- 2. ÉTAT DE L'APPLICATION ---
+    // --- 2. ÉTAT ---
     state: {
-        mode: "day",           // 'day' ou 'month'
-        currentIndex: 0,       // Index du slider (jour ou mois)
-        daysList: [],          // Liste des strings "YYYY-MM-DD"
-        monthlyCache: null,    // STOCKAGE DES DONNÉES MOIS (Pour ne pas recalculer)
-        isMapLoaded: false,
-        lastRequestId: 0       // Pour gérer les requêtes rapides -> sinon bug affichage
+        mode: "day",
+        currentIndex: 0,
+        daysList: [],
+        monthlyCache: null,
+        lastRequestId: 0,
+        animationTimer: null,
+        particles: [],
+        particleCounter: 0 // NOUVEAU : Pour donner un ID unique à chaque bille
     },
 
-    // --- 3. ÉLÉMENTS D3 ---
+    // --- 3. DOM D3 ---
     viz: {
-        svg: null,
-        gMap: null,
-        gLinks: null,
-        gNodes: null,
-        projection: null
+        svg: null, gMap: null, gFlows: null, gLabels: null, gNodes: null,
+        svgHist: null,
+        projection: null,
+        tooltip: null 
     },
 
     // ============================================================
     // INITIALISATION
     // ============================================================
     init: async function() {
-        console.log("FluxApp: Initialisation...");
-
-        // 1. Génération du calendrier
+        console.log("FluxApp: Init vFinal...");
         this.generateCalendar();
-
-        // 2. Initialisation du conteneur SVG
         this.initSVG();
-
-        // 3. Chargement de la carte (Fond géographique)
         await this.loadMap();
-
-        // 4. Attachement des écouteurs d'événements (Boutons, Slider)
         this.bindEvents();
-
-        // 5. Lancement de la vue par défaut (Jour 1)
         this.updateView();
     },
 
     generateCalendar: function() {
-        // Génère la liste des jours de Janvier à Novembre
         for (let d = new Date(this.config.startDate); d <= this.config.endDate; d.setDate(d.getDate() + 1)) {
             const y = d.getFullYear();
             const m = String(d.getMonth() + 1).padStart(2, "0");
             const day = String(d.getDate()).padStart(2, "0");
             this.state.daysList.push(`${y}-${m}-${day}`);
         }
-        
-        // Initialisation slider
         const slider = document.getElementById("timeSliderFlux");
         if(slider) {
             slider.max = this.state.daysList.length - 1;
@@ -80,75 +89,499 @@ const FluxApp = {
     },
 
     initSVG: function() {
+        // --- 1. SÉCURITÉ TOOLTIP ---
+        // On supprime l'ancien s'il existe pour éviter les doublons
+        const oldTt = document.getElementById("tooltip-flux");
+        if (oldTt) oldTt.remove();
+
+        // On crée le tooltip directement dans le BODY pour éviter les problèmes d'overflow/z-index
+        const tt = document.createElement("div");
+        tt.id = "tooltip-flux";
+        // Styles de base critiques pour qu'il soit visible
+        tt.style.position = "absolute";
+        tt.style.pointerEvents = "none";
+        tt.style.opacity = "0";
+        tt.style.zIndex = "9999"; 
+        tt.style.backgroundColor = "rgba(15, 23, 42, 0.95)";
+        tt.style.color = "white";
+        tt.style.padding = "8px 12px";
+        tt.style.borderRadius = "6px";
+        tt.style.fontSize = "0.85rem";
+        
+        document.body.appendChild(tt);
+        this.viz.tooltip = d3.select(tt);
+
+        // --- 2. MAIN MAP ---
         const container = d3.select("#flux-chart");
-        container.selectAll("*").remove(); // Nettoyage sécu
-
+        container.selectAll("svg").remove();
         const w = 600, h = 500;
-        this.viz.svg = container.append("svg")
-            .attr("width", w)
-            .attr("height", h)
-            .attr("viewBox", `0 0 ${w} ${h}`); // Responsive
+        this.viz.svg = container.append("svg").attr("width", w).attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
 
-        // Définition de la projection (Centrée sur la France, Dézoomée)
-        this.viz.projection = d3.geoMercator()
-            .center([3.5, 46.5]) 
-            .scale(1600) 
-            .translate([w / 2, h / 2]);
+        // Projection
+        this.viz.projection = d3.geoMercator().center([3.0, 46.5]).scale(1600).translate([w/2, h/2]);
 
-        // Création des calques (Ordre d'affichage : Carte > Flèches > Points)
-        this.viz.gMap = this.viz.svg.append("g").attr("class", "map-layer");
-        this.viz.gLinks = this.viz.svg.append("g").attr("class", "links-layer");
-        this.viz.gNodes = this.viz.svg.append("g").attr("class", "nodes-layer");
+        // Calques (Ordre important)
+        this.viz.gMap = this.viz.svg.append("g").attr("class", "map-layer");   
+        this.viz.gFlows = this.viz.svg.append("g").attr("class", "flow-layer"); // Lignes + Particules
+        this.viz.gNodes = this.viz.svg.append("g").attr("class", "nodes-layer"); // Points
+        this.viz.gLabels = this.viz.svg.append("g").attr("class", "label-layer"); // Texte
 
-        // Définition des marqueurs (Flèches)
-        const defs = this.viz.svg.append("defs");
-        
-        // Flèche Export (Verte)
-        defs.append("marker").attr("id", "arrow-export")
-            .attr("viewBox", "0 -5 10 10").attr("refX", 8).attr("refY", 0)
-            .attr("markerWidth", 5).attr("markerHeight", 5).attr("orient", "auto")
-            .append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", "#2ecc71");
-        
-        // Flèche Import (Rouge)
-        defs.append("marker").attr("id", "arrow-import")
-            .attr("viewBox", "0 -5 10 10").attr("refX", 8).attr("refY", 0)
-            .attr("markerWidth", 5).attr("markerHeight", 5).attr("orient", "auto")
-            .append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", "#e74c3c");
+        // --- 3. MINI HISTO ---
+        this.viz.svgHist = d3.select("#history-chart");
     },
 
     loadMap: async function() {
         try {
             const data = await d3.json(this.config.geoUrl);
-            const countries = ["FRA", "GBR", "DEU", "BEL", "CHE", "ITA", "ESP", "LUX"];
+            const isoCodes = ["FRA", "GBR", "DEU", "BEL", "CHE", "ITA", "ESP", "LUX", "NLD", "PRT", "AUT", "CZE"];
             
             this.viz.gMap.selectAll("path")
-                .data(data.features.filter(d => countries.includes(d.id)))
+                .data(data.features.filter(d => isoCodes.includes(d.id)))
                 .join("path")
                 .attr("d", d3.geoPath().projection(this.viz.projection))
-                .attr("id", d => d.id === "FRA" ? "FR" : d.id) // ID utile pour CSS
-                .attr("fill", d => d.id === "FRA" ? "#cbd5e1" : "#e2e8f0")
+                .attr("id", d => d.id) 
+                .attr("class", "country-path")
+                .attr("fill", "#e5e7eb")
                 .attr("stroke", "white");
             
-            this.state.isMapLoaded = true;
-        } catch (error) {
-            console.error("Erreur chargement carte:", error);
-            document.getElementById("fluxAnalysisText").innerHTML = "⚠️ Erreur chargement fond de carte.";
-        }
+            this.drawCountryLabels();
+
+        } catch (e) { console.error("Erreur Map", e); }
+    },
+
+    drawCountryLabels: function() {
+        const labels = Object.entries(this.config.coords).map(([key, coords]) => ({key, coords}));
+        
+        // Dictionnaire de traduction pour l'affichage
+        const displayNames = {
+            "UK": "Royaume-Uni",
+            "BE/DE": "All./Belg.",
+            "CH": "Suisse",
+            "IT": "Italie",
+            "ES": "Espagne",
+            "FR": "France" // On laisse vide pour la France (il y a déjà le nœud central)
+        };
+
+        this.viz.gLabels.selectAll("text")
+            .data(labels)
+            .join("text")
+            .attr("x", d => this.viz.projection(d.coords)[0])
+            .attr("y", d => this.viz.projection(d.coords)[1])
+            .attr("text-anchor", "middle")
+            .attr("dy", 25) // Décalage sous le point
+            .style("font-size", "11px") // Légèrement plus grand
+            .style("font-weight", "bold")
+            .style("fill", "#334155")
+            .style("pointer-events", "none") 
+            .style("text-shadow", "0 2px 4px white, 0 0 4px white") // Ombre blanche pour lisibilité sur les lignes
+            .text(d => displayNames[d.key] || d.key); 
     },
 
     // ============================================================
-    // GESTION DES DONNÉES (JOUR & MOIS)
+    // UPDATE VIEW
     // ============================================================
+    updateView: async function() {
+        const reqId = ++this.state.lastRequestId;
+        let data = null, label = "";
 
-    // Charge les données d'un jour spécifique
+        // Reset animation
+        if(this.state.animationTimer) {
+            this.state.animationTimer.stop();
+            this.state.animationTimer = null;
+        }
+        this.state.particles = [];
+
+        if (this.state.mode === "day") {
+            document.getElementById("fluxTitlePrefix").textContent = "Interconnexions (Jour) :";
+            const dayStr = this.state.daysList[this.state.currentIndex];
+            label = dayStr;
+            this.updateLabels("Jour", dayStr);
+            data = await this.loadDayData(dayStr);
+            this.updateHistoryChart(this.state.currentIndex); 
+        } else {
+            document.getElementById("fluxTitlePrefix").textContent = "Interconnexions (Moy. Mensuelle) :";
+            if (!this.state.monthlyCache) await this.calculateMonthlyData();
+            if (reqId !== this.state.lastRequestId) return;
+            
+            const m = this.state.monthlyCache[this.state.currentIndex];
+            if(m) {
+                label = m.label;
+                this.updateLabels("Mois", label);
+                data = m.data;
+                this.viz.svgHist.selectAll("*").remove(); 
+            }
+        }
+
+        if (!data) return;
+
+        this.renderMap(data);
+        this.startParticleAnimation(data);
+        this.updateTextAnalysis(data);
+    },
+
+    updateLabels: function(mode, date) {
+        const titleDate = document.getElementById("fluxTitleDate");
+        if(titleDate) titleDate.textContent = date;
+        const sliderLbl = document.getElementById("sliderLabelFlux");
+        if(sliderLbl) sliderLbl.textContent = `${mode} : ${date}`;
+    },
+
+    // ============================================================
+    // RENDER MAP (Core Logic)
+    // ============================================================
+    renderMap: function(d) {
+        const t = d3.transition().duration(500);
+        
+        // 1. PAYS (Fond)
+        this.viz.gMap.selectAll("path").transition(t).attr("fill", "#e5e7eb").attr("fill-opacity", 1);
+
+        // France
+        const colorCO2 = d3.scaleLinear().domain([0, 40, 80]).range([this.config.colors.export, "#f1c40f", this.config.colors.import]);
+        d3.select("#FRA").transition(t).attr("fill", colorCO2(d.co2_rate || 20)).attr("fill-opacity", 0.8);
+
+        // Voisins
+        const neighborsData = [
+            { id: "UK", val: d.exch_uk }, { id: "ES", val: d.exch_es },
+            { id: "IT", val: d.exch_it }, { id: "CH", val: d.exch_ch },
+            { id: "BE/DE", val: d.exch_de_be }
+        ];
+
+        neighborsData.forEach(n => {
+            const isoList = this.config.isoMap[n.id];
+            if(!isoList) return;
+            const color = n.val < 0 ? this.config.colors.export : this.config.colors.import;
+            isoList.forEach(iso => {
+                d3.select("#" + iso).transition(t).attr("fill", color).attr("fill-opacity", 0.15); // Fond très léger
+            });
+        });
+
+        // 2. DESSIN DES LIGNES (Avec Contour Blanc)
+        const FR_XY = this.viz.projection(this.config.coords.FR);
+        const links = this.viz.gFlows.selectAll(".link-group").data(neighborsData, d => d.id);
+        
+        const enter = links.enter().append("g").attr("class", "link-group");
+        
+        // A. Contour Blanc (Outline) - Dessiné en premier (dessous)
+        enter.append("line").attr("class", "outline-line")
+            .attr("stroke", "white")
+            .attr("stroke-opacity", 0.6)
+            .attr("stroke-linecap", "round");
+
+        // B. Ligne Colorée (Main) - Dessinée par dessus
+        enter.append("line").attr("class", "main-line")
+            .attr("stroke-opacity", 0.6)
+            .attr("stroke-linecap", "round");
+        
+        // C. Zone Hover (Invisible)
+        enter.append("line").attr("class", "hover-line")
+            .attr("stroke", "transparent").attr("stroke-width", 40)
+            .style("cursor", "pointer");
+
+        const merge = links.merge(enter);
+
+        merge.each(function(linkD) {
+            const el = d3.select(this);
+            const targetXY = FluxApp.viz.projection(FluxApp.config.coords[linkD.id]);
+            const col = linkD.val < 0 ? FluxApp.config.colors.export : FluxApp.config.colors.import;
+            
+            // Calcul épaisseur (Min 2px)
+            const thickness = Math.max(2, Math.abs(linkD.val) / 400);
+
+            // Mise à jour positions commune
+            el.selectAll("line")
+                .attr("x1", FR_XY[0]).attr("y1", FR_XY[1])
+                .attr("x2", targetXY[0]).attr("y2", targetXY[1]);
+            
+            // 1. Outline (Blanc, un peu plus large que la ligne couleur)
+            el.select(".outline-line")
+                .attr("stroke-width", thickness + 3); // +3px pour faire le bord
+
+            // 2. Main (Couleur)
+            el.select(".main-line")
+                .attr("stroke", col)
+                .attr("stroke-width", thickness);
+
+            // Events
+            el.on("mouseenter", (e) => FluxApp.handleHover(linkD, e, true))
+              .on("mousemove", (e) => FluxApp.moveTooltip(e))
+              .on("mouseleave", () => FluxApp.handleHover(linkD, null, false));
+        });
+        links.exit().remove();
+
+        // 3. NOEUDS (Points)
+        const nodes = this.viz.gNodes.selectAll(".country-node").data(neighborsData, d => d.id);
+        nodes.enter().append("circle")
+            .attr("class", "country-node")
+            .attr("r", 10)
+            .attr("fill", "white")
+            .attr("stroke", "#334155")
+            .attr("stroke-width", 2)
+            .merge(nodes)
+            .attr("cx", d => this.viz.projection(this.config.coords[d.id])[0])
+            .attr("cy", d => this.viz.projection(this.config.coords[d.id])[1]);
+        nodes.exit().remove();
+
+        // 4. FRANCE
+        this.viz.gNodes.selectAll(".fr-node").data([0]).join("circle")
+            .attr("class", "fr-node").attr("r", 14)
+            .attr("fill", "white").attr("stroke", "#334155").attr("stroke-width", 2)
+            .attr("cx", FR_XY[0]).attr("cy", FR_XY[1]);
+    },
+
+    // ============================================================
+    // ANIMATION PARTICULES (Vitesse Calibrée 1250-3000)
+    // ============================================================
+    startParticleAnimation: function(data) {
+        // 1. SÉCURITÉ : STOPPER L'ANCIEN TIMER IMMÉDIATEMENT
+        if (this.state.animationTimer) {
+            this.state.animationTimer.stop();
+            this.state.animationTimer = null;
+        }
+
+        const links = [
+            { id: "UK", val: data.exch_uk }, { id: "BE/DE", val: data.exch_de_be },
+            { id: "CH", val: data.exch_ch }, { id: "IT", val: data.exch_it }, { id: "ES", val: data.exch_es }
+        ];
+
+        const FR = this.viz.projection(this.config.coords.FR);
+        this.state.particles = [];
+
+        // ÉCHELLE DE VITESSE (Calibrée 1250-3000)
+        const speedScale = d3.scaleLinear()
+            .domain([1250, 3000]) 
+            .range([0.002, 0.015]) 
+            .clamp(true);
+
+        links.forEach(l => {
+            const dest = this.viz.projection(this.config.coords[l.id]);
+            const power = Math.abs(l.val);
+            
+            if (power < 50) return; 
+
+            const count = Math.max(2, Math.min(8, Math.ceil(Math.log(power)/1.5))); 
+            const isExport = l.val < 0; 
+
+            const pSource = isExport ? FR : dest;
+            const pTarget = isExport ? dest : FR;
+            const speed = speedScale(power);
+
+            for(let i=0; i<count; i++) {
+                // On incrémente le compteur global pour avoir un ID unique
+                this.state.particleCounter++;
+                
+                this.state.particles.push({
+                    id: this.state.particleCounter, // ID UNIQUE CRUCIAL
+                    source: pSource,
+                    target: pTarget,
+                    progress: Math.random(), 
+                    speed: speed, 
+                    color: isExport ? this.config.colors.export : this.config.colors.import
+                });
+            }
+        });
+
+        // 2. LANCEMENT DU NOUVEAU TIMER
+        this.state.animationTimer = d3.timer(() => {
+            this.updateParticles();
+        });
+    },
+
+    updateParticles: function() {
+        // CLEF D3 (d => d.id) : Indispensable pour éviter les conflits d'animation
+        const p = this.viz.gFlows.selectAll(".particle")
+            .data(this.state.particles, d => d.id); 
+
+        // ENTER : Création des nouvelles billes
+        p.enter().append("circle")
+            .attr("class", "particle")
+            .attr("r", 4) 
+            .attr("pointer-events", "none")
+            .attr("fill", d => d.color)
+            .attr("opacity", 0) // Apparition en douceur
+            .transition().duration(200).attr("opacity", 0.8) // Fade in
+            .selection() // On revient à la sélection normale pour la suite
+            .merge(p)
+            .attr("cx", d => {
+                d.progress += d.speed;
+                if(d.progress >= 1) d.progress = 0;
+                return d.source[0] + (d.target[0] - d.source[0]) * d.progress;
+            })
+            .attr("cy", d => {
+                return d.source[1] + (d.target[1] - d.source[1]) * d.progress;
+            });
+
+        // EXIT : Suppression propre des anciennes billes
+        p.exit().remove();
+    },
+
+    // ============================================================
+    // BAR CHART HISTORIQUE
+    // ============================================================
+    updateHistoryChart: async function(currentIndex) {
+        const indices = [];
+        for(let i = Math.max(0, currentIndex - 6); i <= currentIndex; i++) indices.push(i);
+
+        const promises = indices.map(i => this.loadDayData(this.state.daysList[i]));
+        const res = await Promise.all(promises);
+        
+        const dataset = res.map((d, k) => ({
+            val: d ? (d.exch_uk+d.exch_es+d.exch_it+d.exch_ch+d.exch_de_be) : 0,
+            date: this.state.daysList[indices[k]],
+            isCurrent: indices[k] === currentIndex
+        }));
+
+        const svg = this.viz.svgHist;
+        svg.selectAll("*").remove();
+        
+        const w = svg.node().getBoundingClientRect().width;
+        const h = 80;
+        const centerY = h / 2;
+        const barW = (w / 7) - 4;
+
+        const maxVal = Math.max(...dataset.map(d => Math.abs(d.val)), 5000);
+        const hScale = d3.scaleLinear().domain([0, maxVal]).range([0, (h/2) - 5]);
+
+        // Ligne Zéro
+        svg.append("line").attr("x1",0).attr("x2",w).attr("y1",centerY).attr("y2",centerY)
+           .attr("stroke","#9ca3af").attr("stroke-width", 1);
+
+        svg.selectAll("rect")
+            .data(dataset)
+            .join("rect")
+            .attr("x", (d, i) => i * (w/dataset.length) + 2)
+            .attr("width", barW)
+            .attr("rx", 2)
+            .attr("fill", d => d.val < 0 ? this.config.colors.export : this.config.colors.import)
+            .attr("opacity", d => d.isCurrent ? 1 : 0.4)
+            .attr("height", d => hScale(Math.abs(d.val)))
+            // Export (<0) : Monte // Import (>0) : Descend
+            .attr("y", d => d.val < 0 ? centerY - hScale(Math.abs(d.val)) : centerY)
+            
+            // Interaction Tooltip
+            .on("mouseenter", (e, d) => {
+                const fluxStr = Math.abs(Math.round(d.val)) + " MW";
+                const type = d.val < 0 ? "Export (Vente) de" : "Import (Achat) de";
+                
+                this.viz.tooltip.style("opacity", 1)
+                    .html(`<strong>${d.date}</strong><br>${type}<br><b>${fluxStr}</b>`);
+                
+                this.moveTooltip(e);
+                d3.select(e.target).attr("opacity", 0.8);
+            })
+            .on("mousemove", (e) => this.moveTooltip(e))
+            .on("mouseleave", (e, d) => {
+                this.viz.tooltip.style("opacity", 0);
+                d3.select(e.target).attr("opacity", d.isCurrent ? 1 : 0.4);
+            });
+    },
+
+    // ============================================================
+    // INTERACTION GÉNÉRALE
+    // ============================================================
+    // ============================================================
+    // INTERACTION GÉNÉRALE (CORRIGÉE)
+    // ============================================================
+    handleHover: function(d, event, active) {
+        // Sécurité
+        if (!d || !d.id) return;
+
+        if (active) {
+            // 1. On active le mode Focus sur le container
+            d3.select("#flux-chart").classed("has-focus", true);
+            
+            // 2. On garde le LIEN (flèche) visible
+            d3.select(event.currentTarget).classed("focused", true);
+            
+            // 3. On garde la FRANCE visible
+            d3.select("#FRA").classed("focused", true);
+
+            // 4. On garde le VOISIN visible et on le met en valeur
+            const isoList = this.config.isoMap[d.id];
+            if (isoList) {
+                isoList.forEach(iso => {
+                    d3.select("#" + iso)
+                        .classed("focused", true) // Empêche le voile blanc (CSS opacity)
+                        .attr("fill-opacity", 0.6)
+                        .attr("stroke", "#334155")
+                        .attr("stroke-width", 1.5);
+                });
+            }
+
+            // 5. Tooltip
+            const flux = Math.round(d.val);
+            const sens = flux < 0 ? "Export de" : "Import de";
+            const paysNames = { "UK": "Royaume-Uni", "ES": "Espagne", "IT": "Italie", "CH": "Suisse", "BE/DE": "All./Belg." };
+            
+            this.viz.tooltip.style("opacity", 1)
+                .html(`<strong>${paysNames[d.id] || d.id}</strong><br>${sens}<br><b>${Math.abs(flux)} MW</b>`);
+            this.moveTooltip(event);
+
+        } else {
+            // --- RESET ---
+            d3.select("#flux-chart").classed("has-focus", false);
+            d3.selectAll(".focused").classed("focused", false); // On retire le focus de tout le monde
+            this.viz.tooltip.style("opacity", 0);
+
+            // Reset style spécifique du Voisin (retour à la normale)
+            const isoList = this.config.isoMap[d.id];
+            if (isoList) {
+                isoList.forEach(iso => {
+                    d3.select("#" + iso)
+                        .attr("fill-opacity", 0.3) // Retour à l'opacité légère par défaut
+                        .attr("stroke", "white")
+                        .attr("stroke-width", 1);
+                });
+            }
+        }
+    },
+
+    moveTooltip: function(event) {
+        if (!this.viz.tooltip) return;
+        // Position absolue par rapport à la page
+        const x = event.pageX + 15;
+        const y = event.pageY - 15;
+        this.viz.tooltip.style("left", x + "px").style("top", y + "px");
+    },
+
+    updateTextAnalysis: function(d) {
+        const net = (d.exch_uk||0) + (d.exch_es||0) + (d.exch_it||0) + (d.exch_ch||0) + (d.exch_de_be||0);
+        const isExp = net < 0;
+        
+        d3.select("#fluxMetricBalance")
+            .text(`${Math.abs(Math.round(net))} MW`)
+            .style("color", isExp ? this.config.colors.export : this.config.colors.import);
+            
+        d3.select("#fluxMetricCO2").text(`${Math.round(d.co2_rate)} g/kWh`);
+
+        const partners = [
+            {n: "Royaume-Uni", v: d.exch_uk}, {n: "Allemagne/Belg.", v: d.exch_de_be},
+            {n: "Suisse", v: d.exch_ch}, {n: "Italie", v: d.exch_it}, {n: "Espagne", v: d.exch_es}
+        ];
+        const main = partners.reduce((p,c) => Math.abs(c.v) > Math.abs(p.v) ? c : p);
+        d3.select("#fluxMetricPartner").text(main.n);
+
+        const textDiv = document.getElementById("fluxAnalysisText");
+        if(textDiv) {
+            let html = "";
+            if (this.state.mode === "day") {
+                html += `Sur cette journée, la France est globalement <strong>${isExp?"exportatrice":"importatrice"}</strong>. `;
+                if(isExp) {
+                    html += `Grâce à sa production, la France soutient ses voisins, avec des exportations notables vers <strong>${main.n}</strong>.`;
+                } else {
+                    html += `Le réseau national sollicite des importations, principalement depuis <strong>${main.n}</strong>.`;
+                }
+            } else {
+                html += `En moyenne sur ce mois, la France est <strong>${isExp?"exportatrice":"importatrice"}</strong> nette. `;
+                html += `Les échanges les plus intenses ont lieu avec <strong>${main.n}</strong>.`;
+            }
+            textDiv.innerHTML = html;
+        }
+    },
+
     loadDayData: async function(dayStr) {
         try {
-            const url = `data/flux_data/flux_${dayStr}.json`;
-            const raw = await d3.json(url);
-            
+            const raw = await d3.json(`data/flux_data/flux_${dayStr}.json`);
             if (!raw || !raw.length) return null;
-
-            // On calcule la moyenne de la journée pour l'affichage
             return {
                 exch_uk: d3.mean(raw, d => d.exch_uk),
                 exch_es: d3.mean(raw, d => d.exch_es),
@@ -157,355 +590,76 @@ const FluxApp = {
                 exch_de_be: d3.mean(raw, d => d.exch_de_be),
                 co2_rate: d3.mean(raw, d => d.co2_rate)
             };
-        } catch (e) {
-            console.warn(`Pas de données pour ${dayStr}`);
-            return null;
-        }
+        } catch { return null; }
     },
 
-    // Calcul lourd : Agrégation de tous les fichiers jours en mois
-    // + MISE EN CACHE dans this.state.monthlyCache
     calculateMonthlyData: async function() {
-        if (this.state.monthlyCache) return this.state.monthlyCache;
-
-        // Feedback utilisateur
-        document.getElementById("fluxAnalysisText").innerHTML = "<em>Calcul des moyennes mensuelles en cours... (Cela peut prendre quelques secondes)</em>";
-
-        const monthlyMap = new Map();
-
-        // On boucle sur tous les jours
-        // Note: Pour optimiser, on pourrait utiliser Promise.all par blocs
-        const promises = this.state.daysList.map(async dayStr => {
+        if(this.state.monthlyCache) return;
+        const map = new Map();
+        const promises = this.state.daysList.map(async day => {
             try {
-                const raw = await d3.json(`data/flux_data/flux_${dayStr}.json`);
-                if (!raw) return;
-                
-                const monthKey = dayStr.substring(0, 7); // "2025-01"
-                if (!monthlyMap.has(monthKey)) {
-                    monthlyMap.set(monthKey, { count: 0, sums: { exch_uk: 0, exch_es: 0, exch_it: 0, exch_ch: 0, exch_de_be: 0, co2_rate: 0 } });
-                }
-                
-                const m = monthlyMap.get(monthKey);
-                // Moyenne du jour
-                m.sums.exch_uk += d3.mean(raw, d => d.exch_uk) || 0;
-                m.sums.exch_es += d3.mean(raw, d => d.exch_es) || 0;
-                m.sums.exch_it += d3.mean(raw, d => d.exch_it) || 0;
-                m.sums.exch_ch += d3.mean(raw, d => d.exch_ch) || 0;
-                m.sums.exch_de_be += d3.mean(raw, d => d.exch_de_be) || 0;
-                m.sums.co2_rate += d3.mean(raw, d => d.co2_rate) || 0;
-                m.count++;
-
-            } catch (e) { /* Ignorer jours manquants */ }
+                const r = await d3.json(`data/flux_data/flux_${day}.json`);
+                if(!r) return;
+                const k = day.slice(0,7);
+                if(!map.has(k)) map.set(k, {c:0, s:{uk:0,es:0,it:0,ch:0,de:0,co2:0}});
+                const m = map.get(k);
+                m.s.uk += d3.mean(r, d=>d.exch_uk)||0; m.s.es += d3.mean(r, d=>d.exch_es)||0;
+                m.s.it += d3.mean(r, d=>d.exch_it)||0; m.s.ch += d3.mean(r, d=>d.exch_ch)||0;
+                m.s.de += d3.mean(r, d=>d.exch_de_be)||0; m.s.co2 += d3.mean(r, d=>d.co2_rate)||0;
+                m.c++;
+            } catch {}
         });
-
         await Promise.all(promises);
-
-        // Transformation en tableau propre
-        const results = Array.from(monthlyMap.entries()).sort().map(([key, val]) => {
-            return {
-                label: key, // "2025-01"
-                data: {
-                    exch_uk: val.sums.exch_uk / val.count,
-                    exch_es: val.sums.exch_es / val.count,
-                    exch_it: val.sums.exch_it / val.count,
-                    exch_ch: val.sums.exch_ch / val.count,
-                    exch_de_be: val.sums.exch_de_be / val.count,
-                    co2_rate: val.sums.co2_rate / val.count
-                }
-            };
-        });
-
-        // SAUVEGARDE DANS LE CACHE
-        this.state.monthlyCache = results;
-        return results;
-    },
-
-    // ============================================================
-    // MISE À JOUR VUE (Visuel + Texte)
-    // ============================================================
-    updateView: async function() {
-        // Incrémenter ID de requête pour éviter les conflits -> resolution bug affi fleches
-        const currentRequestId = ++this.state.lastRequestId;
-
-        let dataToDisplay = null;
-        let labelDisplay = "";
-
-        // 1. Récupération des données selon le mode
-        if (this.state.mode === "day") {
-            const dayStr = this.state.daysList[this.state.currentIndex];
-            labelDisplay = dayStr;
-            
-            // Mise à jour textes statiques HTML
-            document.getElementById("fluxTitlePrefix").textContent = "Interconnexions (Jour) –";
-            document.getElementById("fluxTitleDate").textContent = dayStr;
-            document.getElementById("sliderLabelFlux").textContent = `Jour : ${dayStr}`;
-
-            dataToDisplay = await this.loadDayData(dayStr);
-
-        } else {
-            // MODE MOIS
-            // Vérification si le cache existe, sinon on le crée
-            if (!this.state.monthlyCache) {
-                await this.calculateMonthlyData();
+        this.state.monthlyCache = Array.from(map.entries()).sort().map(([k,v]) => ({
+            label: k,
+            data: {
+                exch_uk: v.s.uk/v.c, exch_es: v.s.es/v.c, exch_it: v.s.it/v.c,
+                exch_ch: v.s.ch/v.c, exch_de_be: v.s.de/v.c, co2_rate: v.s.co2/v.c
             }
-
-            // Sécurité si on change de mode rapidement
-            if (currentRequestId !== this.state.lastRequestId) return;
-            if (this.state.currentIndex >= this.state.monthlyCache.length) this.state.currentIndex = 0;
-            
-            const monthData = this.state.monthlyCache[this.state.currentIndex];
-            if (monthData) {
-                labelDisplay = monthData.label;
-                dataToDisplay = monthData.data;
-                
-                document.getElementById("fluxTitlePrefix").textContent = "Interconnexions (Moy. Mensuelle) –";
-                document.getElementById("fluxTitleDate").textContent = monthData.label;
-                document.getElementById("sliderLabelFlux").textContent = `Mois : ${monthData.label}`;
-            }
-        }
-
-        // 2. Vérifier si c'est toujours la requête active
-        if (currentRequestId !== this.state.lastRequestId) {
-            // Si une nouvelle requête a été lancée entre temps, on annule celle-ci
-            return;
-        }
-
-        // 3. Gestion cas "Pas de données"
-        if (!dataToDisplay) {
-            document.getElementById("fluxAnalysisText").innerHTML = "⚠️ Données indisponibles pour cette période.";
-            this.toggleChartVisibility(false); // Cacher proprement
-            this.resetMetrics();
-            //this.clearChart();
-            return;
-        }
-
-        // 4. Afficher les données
-        this.toggleChartVisibility(true); // Réafficher proprement
-        this.drawFlux(dataToDisplay);
-
-        // 4. Mise à jour de l'analyse texte à droite
-        this.updateAnalysisText(dataToDisplay);
+        }));
     },
 
-    // Fonction de dessin D3
-    // Plutôt que de tout supprimer, on joue sur l'opacité pour la stabilité
-    toggleChartVisibility: function(isVisible) {
-        if (!this.viz.gLinks || !this.viz.gNodes) return;
-        const opacity = isVisible ? 1 : 0;
-        this.viz.gLinks.transition().duration(200).style("opacity", opacity);
-        this.viz.gNodes.transition().duration(200).style("opacity", opacity);
-    },
-
-    resetMetrics: function() {
-        d3.select("#fluxMetricBalance").text("-");
-        d3.select("#fluxMetricPartner").text("-");
-        d3.select("#fluxMetricCO2").text("-");
-    },
-
-    drawFlux: function(data) {
-        if(!this.viz.svg) return;
-
-        // On s'assure que le graphique est visible
-        this.viz.gLinks.style("opacity", 1);
-        this.viz.gNodes.style("opacity", 1);
-
-        const [cx, cy] = this.viz.projection(this.config.coords.FR);
-
-        // Préparation des voisins avec coordonnées projetées
-        const neighbors = [
-            { id: "UK", name: "Royaume-Uni", val: data.exch_uk, coords: this.config.coords.UK },
-            { id: "BE/DE", name: "All./Belg.", val: data.exch_de_be, coords: this.config.coords["BE/DE"] },
-            { id: "CH", name: "Suisse", val: data.exch_ch, coords: this.config.coords.CH },
-            { id: "IT", name: "Italie", val: data.exch_it, coords: this.config.coords.IT },
-            { id: "ES", name: "Espagne", val: data.exch_es, coords: this.config.coords.ES }
-        ];
-
-        // Projection des points
-        neighbors.forEach(n => { 
-            const p = this.viz.projection(n.coords); 
-            n.x = p[0]; n.y = p[1]; 
-        });
-
-        // Interruption des transitions précédentes pour éviter les bugs visuels
-        this.viz.gLinks.selectAll("*").interrupt();
-        this.viz.gNodes.selectAll("*").interrupt();
-
-        const t = d3.transition().duration(400);
-
-        // --- DESSIN DES LIENS ---
-        const links = this.viz.gLinks.selectAll("line").data(neighbors, d => d.id);
-
-        const rFrance = 22; // rayon France (22px)
-        const rVoisin = 9; // rayon Voisin (9px) 
-        const marge = 6; // marge pour éviter que la flèche touche le cercle (6px)
-        
-        links.join(
-            enter => enter.append("line")
-                .attr("stroke-linecap", "round")
-                .attr("opacity", 0)
-                .call(enter => enter.transition(t).attr("opacity", 1)),
-            update => update,
-            exit => exit.transition(t).attr("opacity", 0).remove()
-        )
-        .transition(t)
-        .attr("stroke", d => d.val < 0 ? "#2ecc71" : "#e74c3c") // Vert = Export (<0)
-        .attr("stroke-width", d => Math.max(2, Math.abs(d.val) / 500))
-        .attr("marker-end", d => d.val < 0 ? "url(#arrow-export)" : "url(#arrow-import)")
-        .attr("x1", d => d.val < 0 ? cx : d.x)
-        .attr("y1", d => d.val < 0 ? cy : d.y)
-        .attr("x2", d => {
-            // identifier source et cible
-            const xSource = d.val < 0 ? cx : d.x;
-            const ySource = d.val < 0 ? cy : d.y;
-            const xTarget = d.val < 0 ? d.x : cx;
-            const yTarget = d.val < 0 ? d.y : cy;
-            
-            // choisir le rayon à soustraire (si cible est France ou Voisin)
-            const rTarget = d.val < 0 ? rVoisin + marge : rFrance + marge;
-
-            // calculer l'angle + le décalage
-            const angle = Math.atan2(yTarget - ySource, xTarget - xSource);
-            // reculer le point d'arrivée (x2) en fonction de l'angle
-            return xTarget - Math.cos(angle) * rTarget; 
-        })
-        .attr("y2", d => {
-            const xSource = d.val < 0 ? cx : d.x;
-            const ySource = d.val < 0 ? cy : d.y;
-            const xTarget = d.val < 0 ? d.x : cx;
-            const yTarget = d.val < 0 ? d.y : cy;
-
-            const rTarget = d.val < 0 ? rVoisin + marge : rFrance + marge;
-
-            const angle = Math.atan2(yTarget - ySource, xTarget - xSource);
-            // pareil pour Y
-            return yTarget - Math.sin(angle) * rTarget; 
-        });
-
-        // --- DESSIN DES NOEUDS ---
-        this.viz.gNodes.selectAll("circle.neighbor").data(neighbors).join("circle")
-            .attr("class", "neighbor")
-            .attr("r", rVoisin)
-            .attr("fill", "white").attr("stroke", "#334155").attr("stroke-width", 2)
-            .attr("cx", d => d.x).attr("cy", d => d.y);
-        
-        this.viz.gNodes.selectAll("text.label").data(neighbors).join("text")
-            .attr("class", "label")
-            .attr("x", d => d.x).attr("y", d => d.y + 18)
-            .attr("text-anchor", "middle").attr("font-size", "10px").attr("font-weight", "bold")
-            .text(d => `${d.id}: ${Math.abs(Math.round(d.val))} MW`);
-
-        // --- FRANCE ---
-        const colorScale = d3.scaleLinear().domain([0, 40, 80]).range(["#2ecc71", "#f1c40f", "#e74c3c"]);
-        const co2Color = colorScale(data.co2_rate || 20);
-        
-        let fr = this.viz.gNodes.select(".fr-group");
-        if(fr.empty()) {
-            fr = this.viz.gNodes.append("g").attr("class", "fr-group");
-            fr.append("circle").attr("r", 30).attr("fill", "none").attr("stroke", "currentColor").attr("stroke-width", 1).attr("opacity", 0.3).attr("class", "pulse-circle");
-            fr.append("circle").attr("r", rFrance).attr("stroke", "white").attr("stroke-width", 2).attr("class", "fill-circle");
-            fr.append("text").attr("y", -15).attr("text-anchor", "middle").style("font-weight", "bold").style("font-size", "12px").text("FRANCE");
-        }
-        
-        fr.attr("transform", `translate(${cx},${cy})`);
-        fr.select(".fill-circle").transition(t).attr("fill", co2Color);
-        fr.select(".pulse-circle").transition(t).attr("stroke", co2Color);
-    },
-
-    clearChart: function() {
-        this.viz.gLinks.selectAll("*").remove();
-        this.viz.gNodes.selectAll("*").remove();
-    },
-
-    // Mise à jour de la colonne de droite
-    updateAnalysisText: function(d) {
-        // Somme algébrique des échanges (Neg = Export, Pos = Import)
-        const net = (d.exch_uk||0) + (d.exch_es||0) + (d.exch_it||0) + (d.exch_ch||0) + (d.exch_de_be||0);
-        const isExp = net < 0;
-        
-        d3.select("#fluxMetricBalance").html(
-            `<span style="color:${isExp?'#2ecc71':'#e74c3c'}">
-                ${Math.abs(Math.round(net))} MW (${isExp?"Export":"Import"})
-             </span>`
-        );
-        d3.select("#fluxMetricCO2").text(`${Math.round(d.co2_rate)} g/kWh`);
-        
-        // Trouver le partenaire avec le plus gros volume (valeur absolue)
-        const partners = [
-            {n: "Royaume-Uni", v: d.exch_uk}, {n: "Allemagne/Belg.", v: d.exch_de_be},
-            {n: "Suisse", v: d.exch_ch}, {n: "Italie", v: d.exch_it}, {n: "Espagne", v: d.exch_es}
-        ];
-        const main = partners.reduce((p,c) => Math.abs(c.v) > Math.abs(p.v) ? c : p);
-        d3.select("#fluxMetricPartner").text(`${main.n} (${Math.round(Math.abs(main.v))} MW)`);
-
-        // Texte narratif
-        const textContainer = d3.select("#fluxAnalysisText");
-        let html = "";
-        
-        if (this.state.mode === "day") {
-            html += `Sur cette journée, la France est globalement <strong>${isExp?"exportatrice":"importatrice"}</strong>. `;
-            if(isExp) {
-                html += `Grâce à sa production, la France soutient ses voisins, avec des exports notables vers <strong>${main.n}</strong>.`;
-            } else {
-                html += `Le réseau national sollicite des importations, principalement depuis <strong>${main.n}</strong>.`;
-            }
-        } else {
-            html += `En moyenne sur ce mois, la France est <strong>${isExp?"exportatrice":"importatrice"}</strong> nette. `;
-            html += `Les échanges les plus intenses ont lieu avec <strong>${main.n}</strong>.`;
-        }
-        
-        textContainer.html(html);
-    },
-
-    // ============================================================
-    // GESTION DES ÉVÉNEMENTS
-    // ============================================================
     bindEvents: function() {
-        const btnDay = document.getElementById("modeDayFlux");
-        const btnMonth = document.getElementById("modeMonthFlux");
         const slider = document.getElementById("timeSliderFlux");
-
-        // Click Bouton JOUR
-        btnDay.addEventListener("click", () => {
+        
+        document.getElementById("modeDayFlux").onclick = () => {
             this.state.mode = "day";
-            btnDay.classList.add("active");
-            btnMonth.classList.remove("active");
-            
-            // Reset slider pour jours
+            document.getElementById("modeDayFlux").classList.add("active");
+            document.getElementById("modeMonthFlux").classList.remove("active");
             slider.max = this.state.daysList.length - 1;
-            slider.value = 0;
-            this.state.currentIndex = 0;
-            
+            slider.value = 0; this.state.currentIndex = 0;
             this.updateView();
-        });
+        };
 
-        // Click Bouton MOIS
-        btnMonth.addEventListener("click", async () => {
+        document.getElementById("modeMonthFlux").onclick = async () => {
             this.state.mode = "month";
-            btnMonth.classList.add("active");
-            btnDay.classList.remove("active");
-
-            // Si le cache est vide, on lance le calcul (une seule fois)
-            if (!this.state.monthlyCache) {
-                await this.calculateMonthlyData();
-            }
-
-            // Config slider pour mois (0 à 10 si 11 mois)
+            document.getElementById("modeMonthFlux").classList.add("active");
+            document.getElementById("modeDayFlux").classList.remove("active");
+            if(!this.state.monthlyCache) await this.calculateMonthlyData();
             slider.max = this.state.monthlyCache.length - 1;
-            slider.value = 0;
-            this.state.currentIndex = 0;
-
+            slider.value = 0; this.state.currentIndex = 0;
             this.updateView();
-        });
+        };
 
-        // Slider Input
         slider.addEventListener("input", (e) => {
             this.state.currentIndex = +e.target.value;
             this.updateView();
         });
+
+        document.querySelectorAll(".btn-story").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const eventKey = btn.getAttribute("data-target");
+                const dateTarget = this.config.storyDates[eventKey];
+                const index = this.state.daysList.indexOf(dateTarget);
+                if(index !== -1) {
+                    document.getElementById("modeDayFlux").click();
+                    slider.value = index;
+                    this.state.currentIndex = index;
+                    this.updateView();
+                }
+            });
+        });
     }
 };
 
-// Lancement au chargement de la page
-document.addEventListener("DOMContentLoaded", () => {
-    FluxApp.init();
-});
+document.addEventListener("DOMContentLoaded", () => FluxApp.init());

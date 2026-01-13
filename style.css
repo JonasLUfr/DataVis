@@ -477,3 +477,77 @@ button {
 }
 .f-legend-click { cursor: pointer; }
 .f-muted { opacity: 0.20; }
+
+
+/* --- CSS CARTE & ANIMATION --- */
+.map-layer path {
+    stroke: #ffffff;
+    stroke-width: 1px;
+    transition: fill 0.4s ease, opacity 0.3s;
+}
+
+/* Effet Focus : Quand on survole le graph, on grise tout ce qui n'est pas focus */
+.viz-container.has-focus .map-layer path,
+.viz-container.has-focus .link-group {
+    opacity: 0.3;
+    transition: opacity 0.3s;
+}
+.viz-container.has-focus .map-layer path.focused,
+.viz-container.has-focus .link-group.focused {
+    opacity: 1;
+}
+
+#flux-chart {
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    position: relative; /* Pour le tooltip */
+    overflow: hidden;
+}
+
+/* Tooltip spécifique Flux */
+#tooltip-flux {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.95);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 50; /* Z-index élevé pour passer au dessus de la carte */
+    max-width: 200px;
+}
+
+/* Style des points (Noeuds) */
+.node-circle {
+    transition: r 0.2s, stroke-width 0.2s;
+    cursor: pointer;
+}
+
+/* Légende */
+.legend-color-flux { width: 12px; height: 12px; display: inline-block; border-radius: 50%; margin-right: 5px; }
+
+/* Boutons Storytelling */
+.story-controls {
+    display: flex; gap: 10px; justify-content: center;
+}
+.btn-story {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: #fff; border: 1px solid #d1d5db;
+    border-radius: 6px; cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-story:hover { background: #f3f4f6; border-color: #9ca3af; }
+
+/* Petit graph historique */
+#history-chart-container {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+}
+.hist-bar { transition: fill 0.2s; }
+.hist-bar:hover { fill-opacity: 0.8; }

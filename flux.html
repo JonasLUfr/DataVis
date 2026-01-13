@@ -2,9 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Mix électrique français – Visualisation</title>
+  <title>Interconnexions & Flux - Mix Électrique</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  
   <!-- Feuille de style principale -->
   <link rel="stylesheet" href="style.css" />
 
@@ -14,28 +14,24 @@
 
 <body>
   <main class="page">
-    <header class="page-header">
-      <h1>Équilibre offre–demande</h1>
-      <p>
-        Visualisation de la consommation réelle, de la production totale et des
-        prévisions RTE (J-1 / J). Utilisez le sélecteur pour explorer
-        l'année 2025 jour par jour ou mois par mois.
-      </p>
-    </header>
-    <section class="viz-section" style="margin-top: 40px;">
-        <div class="viz-left">
-            <div>
-                <div class="section-title">
-                    <span id="fluxTitlePrefix">Interconnexions –</span>
-                    <span id="fluxTitleDate"></span>
-                </div>
-                <div class="section-subtitle">
-                    Visualisation des échanges transfrontaliers et de l'intensité carbone.
-                </div>
-            </div>
-            
-            <div class="legend" style="margin-bottom: 10px;">
-                <div class="legend-item">
+    <section class="viz-section" style="margin-top: 28px;">
+      <div class="viz-left" style="flex: 1.6;">
+        <div>
+          <div class="section-title">
+            <span id="fluxTitlePrefix">Interconnexions :</span>
+            <span id="fluxTitleDate">Chargement...</span>
+          </div>
+          <div class="section-subtitle">Visualisation des échanges transfrontaliers et de l'intensité carbone française.</div>
+        </div>
+
+        <div class="story-controls">
+            <button class="btn-story" data-target="event1">❄️ Pic Hiver</button>
+            <button class="btn-story" data-target="event2">☀️ Creux Été</button>
+            <button class="btn-story" data-target="event3">⚡ Record Export</button>
+        </div>
+
+        <div class="legend" style="margin-bottom: 5px;">
+            <div class="legend-item">
                     <span style="color:#2ecc71; font-weight:bold; font-size:1.2em;">&#8594;</span> 
                     <span>Export (Vente)</span>
                 </div>
@@ -43,58 +39,60 @@
                     <span style="color:#e74c3c; font-weight:bold; font-size:1.2em;">&#8594;</span> 
                     <span>Import (Achat)</span>
                 </div>
-                <div class="legend-item" style="margin-left: 15px;">
-                    <div class="legend-color" style="background: linear-gradient(to right, #2ecc71, #f1c40f, #e74c3c); width: 40px;"></div>
-                    <span>Couleur France = Intensité CO2</span>
-                </div>
-            </div>
-
-            <div id="flux-chart" style="height: 500px; display:flex; justify-content:center; background: #fff; border-radius: 8px;"></div>
-
-            <div class="controls">
-                <div class="controls-left">
-                    <span class="tag">Mode</span>
-                    <button id="modeDayFlux" class="toggle-btn active">Jour</button>
-                    <button id="modeMonthFlux" class="toggle-btn">Mois</button>
-                </div>
-                <div class="controls-right">
-                    <span id="sliderLabelFlux" class="slider-label"></span>
-                    <input type="range" id="timeSliderFlux" min="0" max="0" value="0" />
-                </div>
+                <div class="legend-item" style="margin-left:15px;">
+                    <span class="legend-color-flux" style="background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c); width: 40px; border-radius:2px;"></span>
+                    France (Intensité CO2)
             </div>
         </div>
 
-        <aside class="viz-right" style="flex: 1;">
-            <div class="explanation-header">Analyse des flux</div>
-            
-            <div class="explanation-body" id="fluxAnalysisText">
-                Chargement des données...
-            </div>
-            <br>
+        <div id="flux-chart" class="viz-container">
+            <div id="tooltip-flux"></div>
+        </div>
 
-            <div class="metric-row">
-                <div class="metric-label">Solde Commercial (Total)</div>
-                <div class="metric-value" id="fluxMetricBalance">-</div>
-            </div>
-            <div class="metric-row">
-                <div class="metric-label">Partenaire Principal (Vol. Max)</div>
-                <div class="metric-value" id="fluxMetricPartner">-</div>
-            </div>
-            <div class="metric-row">
-                <div class="metric-label">Intensité Carbone (Prod. FR)</div>
-                <div class="metric-value" id="fluxMetricCO2">-</div>
-            </div>
+        <div class="controls" style="margin-top:15px;">
+          <div class="controls-left">
+            <span class="tag">Mode</span>
+            <button id="modeDayFlux" class="toggle-btn active">Jour</button>
+            <button id="modeMonthFlux" class="toggle-btn">Mois</button>
+          </div>
+          <div class="controls-right">
+            <span id="sliderLabelFlux" class="slider-label">Jour : -</span>
+            <input type="range" id="timeSliderFlux" min="0" max="0" value="0" style="width: 200px;" />
+          </div>
+        </div>
+      </div>
 
-            <ul class="bullet-list" id="fluxBulletList">
-                <li>
-                    <strong>Export (Vert) :</strong> La France valorise son excédent bas carbone chez ses voisins.
-                </li>
-                <li>
-                    <strong>Import (Rouge) :</strong> La France dépend de l'extérieur. <em>Note : Si l'import vient d'Allemagne ou d'Espagne, l'impact carbone réel est souvent plus élevé que le taux affiché ici, dû à une production énergétique plus carbonée.</em>
-                </li>
-            </ul>
-        </aside>
+      <aside class="viz-right" style="flex: 1;">
+        <div class="explanation-header">Analyse des flux</div>
+        <div class="explanation-body" id="fluxAnalysisText">Chargement des données...</div>
+        <br>
+
+        <div class="metric-row">
+            <div class="metric-label">Solde Commercial (Total sur la journée)</div>
+            <div class="metric-value" id="fluxMetricBalance">-</div>
+        </div>
+        <div class="metric-row">
+            <div class="metric-label">Partenaire Principal (Vol. Max)</div>
+            <div class="metric-value" id="fluxMetricPartner">-</div>
+        </div>
+        <div class="metric-row">
+            <div class="metric-label">Intensité Carbone (Prod. FR)</div>
+            <div class="metric-value" id="fluxMetricCO2">-</div>
+        </div>
+
+        <div id="history-chart-container">
+            <div class="explanation-header" style="font-size:0.8rem; margin-bottom:5px;">Contexte (Échange sur les 7 derniers jours)</div>
+            <svg id="history-chart" width="100%" height="80"></svg>
+        </div>
+
+        <ul class="bullet-list" id="fluxBulletList">
+            <li><strong>Animation :</strong> La vitesse des particules représente l'intensité des échanges.</li>
+            <li><strong>Couleur Pays :</strong> La France change selon son CO2. Les voisins deviennent <span style="color:#e74c3c">rouges</span> si on importe de l'énergie <span style="color:#2ecc71">verts</span> si on en exporte.</li>
+        </ul>
+      </aside>
     </section>
   </main>
+
   <script src="js/viz_flux.js"></script>
 </body>
+</html>
