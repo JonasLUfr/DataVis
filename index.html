@@ -312,7 +312,7 @@
         <div class="slider-wrapper">
             <span id="prodStart" class="slider-bound start">2025-01-01</span>
             <input type="range" id="fTimeSlider" min="0" max="0" value="0" />
-            <span id="prodEnd" class="slider-bound end">2025-11-27</span>
+            <span id="prodEnd" class="slider-bound end">2025-12-15</span>
         </div>
       </div>
     </div>
@@ -356,6 +356,10 @@
             day: { start: "2025-01-01", end: "2025-11-27" },
             month: { start: "2025-01", end: "2025-11" }
         };
+        const dates2 = {
+            day: { start: "2025-01-01", end: "2025-12-15" },
+            month: { start: "2025-01", end: "2025-12" }
+        };
 
         // GRAPHIQUE 1 (Conso)
         const updateConso = (mode) => {
@@ -368,8 +372,8 @@
 
         // GRAPHIQUE 3 (Production)
         const updateProd = (mode) => {
-            document.getElementById("prodStart").textContent = dates[mode].start;
-            document.getElementById("prodEnd").textContent = "2025-12";
+            document.getElementById("prodStart").textContent = dates2[mode].start;
+            document.getElementById("prodEnd").textContent = dates2[mode].end;
         };
         // On écoute les boutons existants
         document.getElementById("fModeDay").addEventListener("click", () => updateProd("day"));
