@@ -392,41 +392,62 @@ function updateDayAnalysis(dayStr, data) {
 async function buildMonthlyProfiles() {
     if (monthlyProfiles) return monthlyProfiles;
 
+    // Tentative de chargement du fichier pré calculé
+    // Cela évite de lire les 300+ fichiers quotidiens à chaque chargement de page
+    try {
+        const urlPrecalc = "data/monthly_profiles.json"; // Assure-toi que ce fichier est généré
+        // On utilise fetch direct ici pour tester l'existence sans erreur console bloquante
+        const res = await fetch(urlPrecalc);
+        
+        if (res.ok) {
+            document.getElementById("analysisText").innerHTML = "Chargement des profils mensuels optimisés...";
+            const data = await res.json();
+            
+            if (data && data.length > 0) {
+                console.log("Succès : Profils mensuels chargés depuis le cache JSON.");
+                monthlyProfiles = data;
+                return monthlyProfiles;
+            }
+        }
+    } catch (e) {
+        console.warn("Pas de fichier mensuel pré-calculé trouvé, passage au calcul manuel.");
+    }
+
     const perMonth = new Map();
     const total = availableDays.length;
     let processed = 0;
 
     for (const dayStr of availableDays) {
-    processed++;
-    document.getElementById("analysisText").innerHTML =
-        `Calcul du profil moyen pour chaque mois…<br><small>Fichier ${processed} / ${total} : ${dayStr}</small>`;
+        processed++;
+        document.getElementById("analysisText").innerHTML =
+            `Calcul du profil moyen pour chaque mois…<br><small>Fichier ${processed} / ${total} : ${dayStr}</small>`;
 
-    const url = `data/dailydata_clean/day_${dayStr}.json`;
-    const raw = await safeReadJson(url);
-    if (!raw || !raw.length) continue;
+        const url = `data/dailydata_clean/day_${dayStr}.json`;
+        const raw = await safeReadJson(url);
+        if (!raw || !raw.length) continue;
 
-    const monthKey = dayStr.slice(0, 7);
-    if (!perMonth.has(monthKey)) {
-        perMonth.set(monthKey, new Map());
-    }
-    const minuteMap = perMonth.get(monthKey);
-
-    for (const row of raw) {
-        const minutes = parseMinutes(row.time);
-        if (!minuteMap.has(minutes)) {
-        minuteMap.set(minutes, { minutes, loads: [], prods: [] });
+        const monthKey = dayStr.slice(0, 7);
+        if (!perMonth.has(monthKey)) {
+            perMonth.set(monthKey, new Map());
         }
-        const bucket = minuteMap.get(minutes);
-        bucket.loads.push(+row.load);
-        bucket.prods.push(+row.production);
-    }
+        const minuteMap = perMonth.get(monthKey);
+
+        for (const row of raw) {
+            const minutes = parseMinutes(row.time);
+            if (!minuteMap.has(minutes)) {
+                minuteMap.set(minutes, { minutes, loads: [], prods: [] });
+            }
+            const bucket = minuteMap.get(minutes);
+            bucket.loads.push(+row.load);
+            bucket.prods.push(+row.production);
+        }
     }
 
     if (!perMonth.size) {
-    document.getElementById("analysisText").innerHTML =
-        "Impossible de calculer un profil mensuel (aucune journée exploitable).";
-    monthlyProfiles = [];
-    return monthlyProfiles;
+        document.getElementById("analysisText").innerHTML =
+            "Impossible de calculer un profil mensuel (aucune journée exploitable).";
+        monthlyProfiles = [];
+        return monthlyProfiles;
     }
 
     monthlyProfiles = Array.from(perMonth.entries())

@@ -479,14 +479,14 @@ button {
 .f-muted { opacity: 0.20; }
 
 
-/* --- CSS CARTE & ANIMATION --- */
+/* CSS FLUX CARTE & ANIMATION */
 .map-layer path {
     stroke: #ffffff;
     stroke-width: 1px;
     transition: fill 0.4s ease, opacity 0.3s;
 }
 
-/* Effet Focus : Quand on survole le graph, on grise tout ce qui n'est pas focus */
+/* Effet de Focus : Quand on survole le graph, on grise tout ce qui n'est pas focus */
 .viz-container.has-focus .map-layer path,
 .viz-container.has-focus .link-group {
     opacity: 0.3;
@@ -551,3 +551,31 @@ button {
 }
 .hist-bar { transition: fill 0.2s; }
 .hist-bar:hover { fill-opacity: 0.8; }
+
+/* Slider Flux : Bornes Start/End*/
+.slider-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 200px; /* Même largeur que l'input */
+}
+
+/* Les dates (cachées par défaut) */
+.slider-bound {
+    position: absolute;
+    top: -20px; /* Juste au-dessus du slider */
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none; /* Pour ne pas gêner le clic */
+}
+
+.slider-bound.start { left: -25px; }
+.slider-bound.end { right: 0;}
+
+/* Apparition au survol du conteneur */
+.slider-wrapper:hover .slider-bound {
+    opacity: 1;
+}

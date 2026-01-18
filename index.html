@@ -96,7 +96,16 @@
           </div>
           <div class="controls-right">
             <span id="sliderLabel" class="slider-label"></span>
-            <input type="range" id="timeSlider" min="0" max="0" value="0" />
+            
+            <div class="controls-right">
+              <span id="sliderLabel" class="slider-label"></span>
+              
+              <div class="slider-wrapper">
+                  <span id="consoStart" class="slider-bound start">2025-01-01</span>
+                  <input type="range" id="timeSlider" min="0" max="0" value="0" />
+                  <span id="consoEnd" class="slider-bound end">2025-11-27</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -181,8 +190,13 @@
             <button id="modeMonthFlux" class="toggle-btn">Mois</button>
           </div>
           <div class="controls-right">
-            <span id="sliderLabelFlux" class="slider-label">Jour : -</span>
-            <input type="range" id="timeSliderFlux" min="0" max="0" value="0" style="width: 200px;" />
+              <span id="sliderLabelFlux" class="slider-label">Jour : -</span>
+              
+              <div class="slider-wrapper">
+                  <span id="fluxStartBound" class="slider-bound start"></span>
+                  <input type="range" id="timeSliderFlux" min="0" max="0" value="0" />
+                  <span id="fluxEndBound" class="slider-bound end"></span>
+              </div>
           </div>
         </div>
       </div>
@@ -294,7 +308,12 @@
       </div>
       <div class="controls-right">
         <span id="fSliderLabel" class="slider-label"></span>
-        <input type="range" id="fTimeSlider" min="0" max="0" value="0" />
+        
+        <div class="slider-wrapper">
+            <span id="prodStart" class="slider-bound start">2025-01-01</span>
+            <input type="range" id="fTimeSlider" min="0" max="0" value="0" />
+            <span id="prodEnd" class="slider-bound end">2025-11-27</span>
+        </div>
       </div>
     </div>
   </div>
@@ -329,5 +348,33 @@
  
 
   <script src="js/main.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Les textes à afficher selon le mode
+        const dates = {
+            day: { start: "2025-01-01", end: "2025-11-27" },
+            month: { start: "2025-01", end: "2025-11" }
+        };
+
+        // GRAPHIQUE 1 (Conso)
+        const updateConso = (mode) => {
+            document.getElementById("consoStart").textContent = dates[mode].start;
+            document.getElementById("consoEnd").textContent = dates[mode].end;
+        };
+        // On écoute les boutons existants
+        document.getElementById("modeDay").addEventListener("click", () => updateConso("day"));
+        document.getElementById("modeMonth").addEventListener("click", () => updateConso("month"));
+
+        // GRAPHIQUE 3 (Production)
+        const updateProd = (mode) => {
+            document.getElementById("prodStart").textContent = dates[mode].start;
+            document.getElementById("prodEnd").textContent = dates[mode].end;
+        };
+        // On écoute les boutons existants
+        document.getElementById("fModeDay").addEventListener("click", () => updateProd("day"));
+        document.getElementById("fModeMonth").addEventListener("click", () => updateProd("month"));
+    });
+  </script>
 </body>
 </html>

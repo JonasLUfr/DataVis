@@ -1,9 +1,9 @@
 /**
- * Module : Visualisation Flux (Version Finale Debuggée)
+ * Visualisation Flux
  */
 
 const FluxApp = {
-    // --- 1. CONFIGURATION ---
+    // Configuration
     config: {
         startDate: new Date("2025-01-01"),
         endDate: new Date("2025-11-27"),
@@ -12,10 +12,10 @@ const FluxApp = {
         storyDates: {
             "event1": "2025-01-14", // Grand Froid 
             "event2": "2025-06-28", // Été creux
-            "event3": "2025-09-30"  // record export
+            "event3": "2025-09-30"  // Record export
         },
 
-        // Coordonnées GPS (Version espacée)
+        // Coordonnées GPS
         coords: {
             "FR": [2.5, 48.5],
             "UK": [-1.5, 52.0],
@@ -42,7 +42,7 @@ const FluxApp = {
         }
     },
 
-    // --- 2. ÉTAT ---
+    // ÉTAT State de la page
     state: {
         mode: "day",
         currentIndex: 0,
@@ -51,10 +51,10 @@ const FluxApp = {
         lastRequestId: 0,
         animationTimer: null,
         particles: [],
-        particleCounter: 0 // NOUVEAU : Pour donner un ID unique à chaque bille
+        particleCounter: 0 // Pour donner un ID unique à chaque bille
     },
 
-    // --- 3. DOM D3 ---
+    // DOM D3.js
     viz: {
         svg: null, gMap: null, gFlows: null, gLabels: null, gNodes: null,
         svgHist: null,
@@ -62,9 +62,7 @@ const FluxApp = {
         tooltip: null 
     },
 
-    // ============================================================
-    // INITIALISATION
-    // ============================================================
+    // Initialisation
     init: async function() {
         console.log("FluxApp: Init vFinal...");
         this.generateCalendar();
@@ -89,15 +87,14 @@ const FluxApp = {
     },
 
     initSVG: function() {
-        // --- 1. SÉCURITÉ TOOLTIP ---
-        // On supprime l'ancien s'il existe pour éviter les doublons
+        // On suppr l'ancien  tooltip s'il existe pour éviter les doublons
         const oldTt = document.getElementById("tooltip-flux");
         if (oldTt) oldTt.remove();
 
-        // On crée le tooltip directement dans le BODY pour éviter les problèmes d'overflow/z-index
+        // On crée le tooltip
         const tt = document.createElement("div");
         tt.id = "tooltip-flux";
-        // Styles de base critiques pour qu'il soit visible
+        // Styles de base
         tt.style.position = "absolute";
         tt.style.pointerEvents = "none";
         tt.style.opacity = "0";
@@ -111,7 +108,7 @@ const FluxApp = {
         document.body.appendChild(tt);
         this.viz.tooltip = d3.select(tt);
 
-        // --- 2. MAIN MAP ---
+        // Main MAP
         const container = d3.select("#flux-chart");
         container.selectAll("svg").remove();
         const w = 600, h = 500;
@@ -126,7 +123,7 @@ const FluxApp = {
         this.viz.gNodes = this.viz.svg.append("g").attr("class", "nodes-layer"); // Points
         this.viz.gLabels = this.viz.svg.append("g").attr("class", "label-layer"); // Texte
 
-        // --- 3. MINI HISTO ---
+        // Mini Histogram analyse tendance
         this.viz.svgHist = d3.select("#history-chart");
     },
 
@@ -152,14 +149,14 @@ const FluxApp = {
     drawCountryLabels: function() {
         const labels = Object.entries(this.config.coords).map(([key, coords]) => ({key, coords}));
         
-        // Dictionnaire de traduction pour l'affichage
+        // Dico de trad pour l'affichage
         const displayNames = {
             "UK": "Royaume-Uni",
             "BE/DE": "All./Belg.",
             "CH": "Suisse",
             "IT": "Italie",
             "ES": "Espagne",
-            "FR": "France" // On laisse vide pour la France (il y a déjà le nœud central)
+            "FR": "France" // On laisse vide pour la France
         };
 
         this.viz.gLabels.selectAll("text")
@@ -177,12 +174,18 @@ const FluxApp = {
             .text(d => displayNames[d.key] || d.key); 
     },
 
+    // Update view
     // ============================================================
     // UPDATE VIEW
     // ============================================================
     updateView: async function() {
         const reqId = ++this.state.lastRequestId;
         let data = null, label = "";
+
+        // Elements DOM
+        const historyContainer = document.getElementById("history-chart-container");
+        const startBound = document.getElementById("fluxStartBound");
+        const endBound = document.getElementById("fluxEndBound");
 
         // Reset animation
         if(this.state.animationTimer) {
@@ -192,22 +195,46 @@ const FluxApp = {
         this.state.particles = [];
 
         if (this.state.mode === "day") {
+            // MODE JOUR
             document.getElementById("fluxTitlePrefix").textContent = "Interconnexions (Jour) :";
+            
+            // Afficher l'historique
+            if(historyContainer) historyContainer.style.display = "block";
+
+            // maj les bornes du slider (Première et dernière date de la liste)
+            if(this.state.daysList.length > 0) {
+                if(startBound) startBound.textContent = this.state.daysList[0];
+                if(endBound) endBound.textContent = this.state.daysList[this.state.daysList.length - 1];
+            }
+
             const dayStr = this.state.daysList[this.state.currentIndex];
             label = dayStr;
             this.updateLabels("Jour", dayStr);
             data = await this.loadDayData(dayStr);
             this.updateHistoryChart(this.state.currentIndex); 
+
         } else {
+            // MODE MOIS
             document.getElementById("fluxTitlePrefix").textContent = "Interconnexions (Moy. Mensuelle) :";
+            
+            // Cacher l'historique (car non pertinent si par mois)
+            if(historyContainer) historyContainer.style.display = "none";
+
             if (!this.state.monthlyCache) await this.calculateMonthlyData();
             if (reqId !== this.state.lastRequestId) return;
             
+            // maj les bornes du slider (Premier et dernier mois)
+            if(this.state.monthlyCache && this.state.monthlyCache.length > 0) {
+                if(startBound) startBound.textContent = this.state.monthlyCache[0].label;
+                if(endBound) endBound.textContent = this.state.monthlyCache[this.state.monthlyCache.length - 1].label;
+            }
+
             const m = this.state.monthlyCache[this.state.currentIndex];
             if(m) {
                 label = m.label;
                 this.updateLabels("Mois", label);
                 data = m.data;
+                // On vide le SVG histo par sécurité
                 this.viz.svgHist.selectAll("*").remove(); 
             }
         }
@@ -226,13 +253,11 @@ const FluxApp = {
         if(sliderLbl) sliderLbl.textContent = `${mode} : ${date}`;
     },
 
-    // ============================================================
-    // RENDER MAP (Core Logic)
-    // ============================================================
+    // Render Map
     renderMap: function(d) {
         const t = d3.transition().duration(500);
         
-        // 1. PAYS (Fond)
+        // PAYS (Fond)
         this.viz.gMap.selectAll("path").transition(t).attr("fill", "#e5e7eb").attr("fill-opacity", 1);
 
         // France
@@ -255,24 +280,24 @@ const FluxApp = {
             });
         });
 
-        // 2. DESSIN DES LIGNES (Avec Contour Blanc)
+        // DESSIN DES LIGNES (avec le contour blanc)
         const FR_XY = this.viz.projection(this.config.coords.FR);
         const links = this.viz.gFlows.selectAll(".link-group").data(neighborsData, d => d.id);
         
         const enter = links.enter().append("g").attr("class", "link-group");
         
-        // A. Contour Blanc (Outline) - Dessiné en premier (dessous)
+        // Contour blanc dessiné en premier (pour etre en dessous)
         enter.append("line").attr("class", "outline-line")
             .attr("stroke", "white")
             .attr("stroke-opacity", 0.6)
             .attr("stroke-linecap", "round");
 
-        // B. Ligne Colorée (Main) - Dessinée par dessus
+        //Ligne Colorée
         enter.append("line").attr("class", "main-line")
             .attr("stroke-opacity", 0.6)
             .attr("stroke-linecap", "round");
         
-        // C. Zone Hover (Invisible)
+        // Zone du Hover
         enter.append("line").attr("class", "hover-line")
             .attr("stroke", "transparent").attr("stroke-width", 40)
             .style("cursor", "pointer");
@@ -284,19 +309,19 @@ const FluxApp = {
             const targetXY = FluxApp.viz.projection(FluxApp.config.coords[linkD.id]);
             const col = linkD.val < 0 ? FluxApp.config.colors.export : FluxApp.config.colors.import;
             
-            // Calcul épaisseur (Min 2px)
+            // Calcul épaisseur (min 2px)
             const thickness = Math.max(2, Math.abs(linkD.val) / 400);
 
-            // Mise à jour positions commune
+            // maj des positions commune
             el.selectAll("line")
                 .attr("x1", FR_XY[0]).attr("y1", FR_XY[1])
                 .attr("x2", targetXY[0]).attr("y2", targetXY[1]);
             
-            // 1. Outline (Blanc, un peu plus large que la ligne couleur)
+            // Outline (blanc & plus large que la ligne couleur)
             el.select(".outline-line")
                 .attr("stroke-width", thickness + 3); // +3px pour faire le bord
 
-            // 2. Main (Couleur)
+            // Main -> couleur
             el.select(".main-line")
                 .attr("stroke", col)
                 .attr("stroke-width", thickness);
@@ -308,7 +333,7 @@ const FluxApp = {
         });
         links.exit().remove();
 
-        // 3. NOEUDS (Points)
+        // NOEUDS
         const nodes = this.viz.gNodes.selectAll(".country-node").data(neighborsData, d => d.id);
         nodes.enter().append("circle")
             .attr("class", "country-node")
@@ -321,18 +346,16 @@ const FluxApp = {
             .attr("cy", d => this.viz.projection(this.config.coords[d.id])[1]);
         nodes.exit().remove();
 
-        // 4. FRANCE
+        // FRANCE
         this.viz.gNodes.selectAll(".fr-node").data([0]).join("circle")
             .attr("class", "fr-node").attr("r", 14)
             .attr("fill", "white").attr("stroke", "#334155").attr("stroke-width", 2)
             .attr("cx", FR_XY[0]).attr("cy", FR_XY[1]);
     },
 
-    // ============================================================
-    // ANIMATION PARTICULES (Vitesse Calibrée 1250-3000)
-    // ============================================================
+    // Animation des particules (vitesse calibrée entre 1250-3000)
     startParticleAnimation: function(data) {
-        // 1. SÉCURITÉ : STOPPER L'ANCIEN TIMER IMMÉDIATEMENT
+        // On stop lancien timer (sécurité)
         if (this.state.animationTimer) {
             this.state.animationTimer.stop();
             this.state.animationTimer = null;
@@ -346,7 +369,7 @@ const FluxApp = {
         const FR = this.viz.projection(this.config.coords.FR);
         this.state.particles = [];
 
-        // ÉCHELLE DE VITESSE (Calibrée 1250-3000)
+        // Scale vitesse (calibrée sur 1250-3000)
         const speedScale = d3.scaleLinear()
             .domain([1250, 3000]) 
             .range([0.002, 0.015]) 
@@ -366,11 +389,11 @@ const FluxApp = {
             const speed = speedScale(power);
 
             for(let i=0; i<count; i++) {
-                // On incrémente le compteur global pour avoir un ID unique
+                // On incr le compteur global pour avoir un ID unique
                 this.state.particleCounter++;
                 
                 this.state.particles.push({
-                    id: this.state.particleCounter, // ID UNIQUE CRUCIAL
+                    id: this.state.particleCounter, // ID UNIQUE
                     source: pSource,
                     target: pTarget,
                     progress: Math.random(), 
@@ -380,18 +403,18 @@ const FluxApp = {
             }
         });
 
-        // 2. LANCEMENT DU NOUVEAU TIMER
+        // Lancement du new timer
         this.state.animationTimer = d3.timer(() => {
             this.updateParticles();
         });
     },
 
     updateParticles: function() {
-        // CLEF D3 (d => d.id) : Indispensable pour éviter les conflits d'animation
+        // (d => d.id) pour éviter les conflits d'animation
         const p = this.viz.gFlows.selectAll(".particle")
             .data(this.state.particles, d => d.id); 
 
-        // ENTER : Création des nouvelles billes
+        // Création des nouvelles billes
         p.enter().append("circle")
             .attr("class", "particle")
             .attr("r", 4) 
@@ -410,13 +433,11 @@ const FluxApp = {
                 return d.source[1] + (d.target[1] - d.source[1]) * d.progress;
             });
 
-        // EXIT : Suppression propre des anciennes billes
+        // Suppression propre des anciennes billes
         p.exit().remove();
     },
 
-    // ============================================================
-    // BAR CHART HISTORIQUE
-    // ============================================================
+    // Bar Chart Historique
     updateHistoryChart: async function(currentIndex) {
         const indices = [];
         for(let i = Math.max(0, currentIndex - 6); i <= currentIndex; i++) indices.push(i);
@@ -454,7 +475,7 @@ const FluxApp = {
             .attr("fill", d => d.val < 0 ? this.config.colors.export : this.config.colors.import)
             .attr("opacity", d => d.isCurrent ? 1 : 0.4)
             .attr("height", d => hScale(Math.abs(d.val)))
-            // Export (<0) : Monte // Import (>0) : Descend
+            // Export (<0) : Monte & Import (>0) : Descend
             .attr("y", d => d.val < 0 ? centerY - hScale(Math.abs(d.val)) : centerY)
             
             // Interaction Tooltip
@@ -475,39 +496,35 @@ const FluxApp = {
             });
     },
 
-    // ============================================================
-    // INTERACTION GÉNÉRALE
-    // ============================================================
-    // ============================================================
-    // INTERACTION GÉNÉRALE (CORRIGÉE)
-    // ============================================================
+
+    // Intéraction générale
     handleHover: function(d, event, active) {
         // Sécurité
         if (!d || !d.id) return;
 
         if (active) {
-            // 1. On active le mode Focus sur le container
+            // On active le mode Focus sur le container
             d3.select("#flux-chart").classed("has-focus", true);
             
-            // 2. On garde le LIEN (flèche) visible
+            // On garde le LIEN (la flèche) visible
             d3.select(event.currentTarget).classed("focused", true);
             
-            // 3. On garde la FRANCE visible
+            // On garde la FRANCE visible
             d3.select("#FRA").classed("focused", true);
 
-            // 4. On garde le VOISIN visible et on le met en valeur
+            // On garde le VOISIN visible et on le met en valeur
             const isoList = this.config.isoMap[d.id];
             if (isoList) {
                 isoList.forEach(iso => {
                     d3.select("#" + iso)
-                        .classed("focused", true) // Empêche le voile blanc (CSS opacity)
+                        .classed("focused", true) // Empêche un voile blanc (CSS opacity)
                         .attr("fill-opacity", 0.6)
                         .attr("stroke", "#334155")
                         .attr("stroke-width", 1.5);
                 });
             }
 
-            // 5. Tooltip
+            // Tooltip
             const flux = Math.round(d.val);
             const sens = flux < 0 ? "Export de" : "Import de";
             const paysNames = { "UK": "Royaume-Uni", "ES": "Espagne", "IT": "Italie", "CH": "Suisse", "BE/DE": "All./Belg." };
@@ -517,7 +534,7 @@ const FluxApp = {
             this.moveTooltip(event);
 
         } else {
-            // --- RESET ---
+            // Reset
             d3.select("#flux-chart").classed("has-focus", false);
             d3.selectAll(".focused").classed("focused", false); // On retire le focus de tout le monde
             this.viz.tooltip.style("opacity", 0);
